@@ -1,0 +1,67 @@
+{
+  "version": "2.0.0",
+  "inputs": [
+    {
+      "id": "esp32Port",
+      "type": "promptString",
+      "description": "Puerto serial del ESP32",
+      "default": "COM4"
+    }
+  ],
+  "tasks": [
+    {
+      "label": "Arduino: Compile ESP32 (huge_app)",
+      "type": "shell",
+      "command": "C:\\Program Files\\Arduino CLI\\arduino-cli.exe",
+      "args": [
+        "compile",
+        "--fqbn",
+        "esp32:esp32:esp32:PartitionScheme=huge_app",
+        "${workspaceFolder}"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Arduino: Upload ESP32 (huge_app)",
+      "type": "shell",
+      "command": "C:\\Program Files\\Arduino CLI\\arduino-cli.exe",
+      "args": [
+        "upload",
+        "-p",
+        "${input:esp32Port}",
+        "--fqbn",
+        "esp32:esp32:esp32:PartitionScheme=huge_app",
+        "${workspaceFolder}"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Arduino: Monitor ESP32 (115200)",
+      "type": "shell",
+      "command": "C:\\Program Files\\Arduino CLI\\arduino-cli.exe",
+      "args": [
+        "monitor",
+        "-p",
+        "${input:esp32Port}",
+        "-b",
+        "esp32:esp32:esp32:PartitionScheme=huge_app",
+        "-c",
+        "baudrate=115200"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Arduino: Compile + Upload ESP32",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Arduino: Compile ESP32 (huge_app)",
+        "Arduino: Upload ESP32 (huge_app)"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
