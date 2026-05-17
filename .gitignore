@@ -1,0 +1,30 @@
+# ── Herramientas internas (no relevante para estudiantes) ──────────────────
+.claude/
+
+# ── Salida de compilación de Arduino CLI ───────────────────────────────────
+build/
+*.elf
+*.hex
+*.map
+*.bin.gz
+
+# ── Credenciales (si se externalizan en el futuro) ─────────────────────────
+secrets.h
+credentials.h
+.env
+
+# ── Página web (dependencias generadas) ────────────────────────────────────
+04_pagina_web/node_modules/
+04_pagina_web/dist/
+04_pagina_web/.next/
+04_pagina_web/.nuxt/
+
+# ── Sistema operativo ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# ── Logs y temporales ──────────────────────────────────────────────────────
+*.log
+*.tmp
