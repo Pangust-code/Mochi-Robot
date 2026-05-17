@@ -1,0 +1,32 @@
+# Arduino build outputs
+.pio/
+.cache/
+build/
+dist/
+
+# Arduino CLI / IDE generated files
+*.bin
+*.hex
+*.elf
+*.map
+*.log
+*.tmp
+*.bak
+
+# ESP32 / platform-specific artifacts
+*.partitions.bin
+*.bootloader.bin
+*.merge.bin
+
+# VS Code local state
+.vscode/*.log
+.vscode/*.db
+.vscode/*.sqlite
+
+# Windows junk
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# System files
+.DS_Store
