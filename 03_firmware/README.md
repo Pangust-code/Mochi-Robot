@@ -28,6 +28,19 @@ El firmware es el programa que corre dentro del ESP32 y hace que Mochi funcione.
 
 ---
 
+## Sketches de prueba
+
+Antes de subir el firmware completo, usa estos sketches para verificar que el hardware esté bien conectado:
+
+| Sketch | Carpeta | Para qué sirve |
+|--------|---------|----------------|
+| `prueba_conexion_microfono` | [pruebas/prueba_conexion_microfono/](pruebas/prueba_conexion_microfono/) | Toca cada pin del INMP441 a GND con un dupont y verifica que el ESP32 lo detecta |
+| `prueba_sonido_microfono` | [pruebas/prueba_sonido_microfono/](pruebas/prueba_sonido_microfono/) | Lee audio en tiempo real y muestra amplitud, barra de nivel y clasificación |
+
+> Orden recomendado: primero `prueba_conexion_microfono` → luego `prueba_sonido_microfono` → luego el firmware principal.
+
+---
+
 ## Siguiente paso
 
 Lee el README dentro de [mochi_unified_5/](mochi_unified_5/) para entender el código antes de subirlo.
