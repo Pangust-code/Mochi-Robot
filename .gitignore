@@ -25,6 +25,15 @@ Thumbs.db
 desktop.ini
 $RECYCLE.BIN/
 
+# ── Convertidor de GIFs (archivos generados, no subir al repo) ─────────────
+herramientas/convertidor_gifs/data/
+herramientas/convertidor_gifs/*/          # carpetas de frames generadas por gif.exe
+!herramientas/convertidor_gifs/README.md  # mantener el README aunque la carpeta esté vacía
+
+# ── GIFs fuente (binarios grandes — usar Git LFS o gestionar localmente) ────
+# Descomenta la siguiente línea si NO quieres rastrear los GIFs en git:
+# recursos/gifs/*.gif
+
 # ── Logs y temporales ──────────────────────────────────────────────────────
 *.log
 *.tmp

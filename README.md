@@ -17,14 +17,21 @@ Un pequeño robot con pantalla OLED que:
 
 ## Ruta de aprendizaje
 
-Sigue las carpetas en orden:
+Sigue las carpetas numeradas en orden:
 
 | Paso | Carpeta | Contenido |
 |------|---------|-----------|
 | 1 | [01_hardware/](01_hardware/) | Lista de componentes y cómo conectarlos |
 | 2 | [02_software/](02_software/) | Configurar Arduino CLI y VS Code |
-| 3 | [03_firmware/](03_firmware/) | El código del robot y cómo subirlo |
+| 3 | [03_firmware/](03_firmware/) | El código del robot, sketches de prueba y cómo subirlo |
 | 4 | [04_pagina_web/](04_pagina_web/) | *(En desarrollo)* Interfaz web del robot |
+
+### Materiales de apoyo
+
+| Carpeta | Contenido |
+|---------|-----------|
+| [recursos/gifs/](recursos/gifs/) | 99 animaciones GIF disponibles para cargar en el robot |
+| [herramientas/convertidor_gifs/](herramientas/convertidor_gifs/) | Convierte GIFs al formato `.bin` que usa el ESP32 |
 
 ---
 
