@@ -4,20 +4,20 @@
     {
       "id": "esp32Port",
       "type": "promptString",
-      "description": "Puerto serial del ESP32",
+      "description": "Puerto serial del ESP32 (ej: COM3, COM4, /dev/ttyUSB0)",
       "default": "COM4"
     }
   ],
   "tasks": [
     {
-      "label": "Arduino: Compile ESP32 (huge_app)",
+      "label": "Arduino: Compilar ESP32-C6 (huge_app)",
       "type": "shell",
-      "command": "C:\\Program Files\\Arduino CLI\\arduino-cli.exe",
+      "command": "arduino-cli",
       "args": [
         "compile",
         "--fqbn",
-        "esp32:esp32:esp32:PartitionScheme=huge_app",
-        "${workspaceFolder}"
+        "esp32:esp32:esp32c6:PartitionScheme=huge_app",
+        "${workspaceFolder}/03_firmware/mochi_unified_5"
       ],
       "group": {
         "kind": "build",
@@ -26,40 +26,40 @@
       "problemMatcher": []
     },
     {
-      "label": "Arduino: Upload ESP32 (huge_app)",
+      "label": "Arduino: Subir al ESP32-C6",
       "type": "shell",
-      "command": "C:\\Program Files\\Arduino CLI\\arduino-cli.exe",
+      "command": "arduino-cli",
       "args": [
         "upload",
         "-p",
         "${input:esp32Port}",
         "--fqbn",
-        "esp32:esp32:esp32:PartitionScheme=huge_app",
-        "${workspaceFolder}"
+        "esp32:esp32:esp32c6:PartitionScheme=huge_app",
+        "${workspaceFolder}/03_firmware/mochi_unified_5"
       ],
       "problemMatcher": []
     },
     {
-      "label": "Arduino: Monitor ESP32 (115200)",
+      "label": "Arduino: Monitor Serial (115200)",
       "type": "shell",
-      "command": "C:\\Program Files\\Arduino CLI\\arduino-cli.exe",
+      "command": "arduino-cli",
       "args": [
         "monitor",
         "-p",
         "${input:esp32Port}",
         "-b",
-        "esp32:esp32:esp32:PartitionScheme=huge_app",
+        "esp32:esp32:esp32c6:PartitionScheme=huge_app",
         "-c",
         "baudrate=115200"
       ],
       "problemMatcher": []
     },
     {
-      "label": "Arduino: Compile + Upload ESP32",
+      "label": "Arduino: Compilar + Subir",
       "dependsOrder": "sequence",
       "dependsOn": [
-        "Arduino: Compile ESP32 (huge_app)",
-        "Arduino: Upload ESP32 (huge_app)"
+        "Arduino: Compilar ESP32-C6 (huge_app)",
+        "Arduino: Subir al ESP32-C6"
       ],
       "problemMatcher": []
     }

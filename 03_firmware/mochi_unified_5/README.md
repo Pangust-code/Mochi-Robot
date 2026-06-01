@@ -1,190 +1,186 @@
-# Firmware — mochi_unified_5 (v6)
+# Sección 3 — Funciones del robot
 
-Este es el firmware principal de Mochi. Está escrito en Arduino/C++ para el **ESP32-C6 Supermini**.
+> **Prerrequisito:** [03_firmware/](../) — firmware cargado y funcionando.
 
-> **Estado:** Beta funcional. Todos los modos operan correctamente.
-
----
-
-## Archivos
-
-| Archivo | Descripción |
-|---------|-------------|
-| `mochi_unified_5.ino` | Código principal del firmware |
-| `data/` | Animaciones en formato binario para el modo GIF |
+Esta carpeta contiene el código fuente completo del robot. Esta sección explica cómo está organizado y qué hace cada módulo, para que puedas modificarlo con confianza.
 
 ---
 
-## Estructura del código
+## Archivos de esta carpeta
 
-El código está organizado en secciones bien delimitadas. Esta es la estructura general:
+| Archivo | Contenido |
+|---------|-----------|
+| `mochi_unified_5.ino` | Código fuente principal del robot |
+| `data/` | Animaciones en formato `.bin` para el Modo 1 (GIFs) |
+
+---
+
+## Estructura general del código
 
 ```
 mochi_unified_5.ino
 │
-├── Configuración de hardware (pines, I2C, I2S)
-├── Definición de estados de ánimo (10 moods)
-├── Sistema de físicas para los ojos (spring-damper)
-├── Manejo de toque táctil (eventos)
-├── Manejo de micrófono (I2S)
+├── Configuración (pines, constantes, variables globales)
+├── Struct Eye           — física spring-damper de los ojos
+├── procesTouch()        — lectura centralizada del sensor táctil
+├── handleModeChange()   — transición entre modos al hacer hold
+├── initFS()             — monta LittleFS (sistema de archivos)
+├── initMicrophone()     — configura I2S a 16 kHz
+├── leerAmplitud()       — lee nivel de ruido del micrófono
 │
-├── setup()   — inicializa pantalla, WiFi (si modo reloj), LittleFS
-└── loop()
-    ├── leer sensor táctil → publicar eventos
-    ├── leer micrófono
-    ├── procesar eventos (toque corto, toque largo, ráfaga de toques)
-    └── renderizar modo activo
-        ├── Modo 0: Mascota (ojos animados)
-        ├── Modo 1: GIFs (LittleFS)
-        ├── Modo 2: Reloj (NTP)
+├── setup()
+│   ├── Inicializa OLED (I2C)
+│   ├── Configura micrófono (I2S)
+│   ├── Monta LittleFS
+│   └── Si modo 2 activo → conecta WiFi + NTP
+│
+└── loop()  [~30 veces/segundo]
+    ├── procesTouch()       → publica eventos de interacción
+    ├── handleModeChange()  → si hubo hold, avanza modo
+    ├── leerAmplitud()      → detecta ruidos fuertes
+    └── renderiza el modo activo
+        ├── Modo 0: Mascota (ojos + moods)
+        ├── Modo 1: GIFs (LittleFS → U8g2)
+        ├── Modo 2: Reloj (WiFi + NTP)
         ├── Modo 3: Pomodoro
         └── Modo 4: Test micrófono
 ```
 
 ---
 
-## Modos explicados
+## Módulos — tabla resumen
 
-### Modo 0 — Mascota (por defecto)
-
-Muestra ojos animados en la pantalla OLED con física de primavera (spring-damper) para movimientos suaves.
-
-**Sistema de ánimos — 10 estados:**
-
-| Estado | Qué muestra |
-|--------|------------|
-| `NORMAL` | Ojos redondos, parpadeando |
-| `HAPPY` | Ojos curvados hacia arriba |
-| `SURPRISED` | Ojos grandes, abiertos |
-| `SLEEPY` | Parpados caídos, lentos |
-| `ANGRY` | Cejas inclinadas hacia abajo |
-| `SAD` | Ojos caídos en las esquinas |
-| `EXCITED` | Ojos muy abiertos, brillantes |
-| `LOVE` | Ojos en forma de corazón |
-| `SUSPICIOUS` | Un ojo semicerrado |
-| `DIZZY` | Ojos en espiral |
-
-**Controles:**
-- **1 toque** → ánimo aleatorio
-- **3+ toques rápidos** → reproduce el tema de Tetris 🎵
-- **Sonido fuerte** → reacción de susto por 2 segundos
-
-**Características de animación:**
-- Parpadeo automático cada 2–6 segundos
-- Movimientos sacádicos (ojos que se mueven solos de forma natural)
-- Las pupilas siguen patrones de movimiento
+| Módulo | Función | Entradas | Salidas |
+|--------|---------|----------|---------|
+| `procesTouch()` | Lee el sensor táctil UNA VEZ por ciclo y publica eventos | GPIO 2 | Variables `ev_*` |
+| Motor de ojos | Anima dos ojos con física spring-damper | `currentMood`, `millis()` | Píxeles OLED |
+| Sistema de moods | 10 formas de dibujar los ojos | ID de mood (0–9) | Tamaño y máscara de párpado |
+| `leerAmplitud()` | Lee nivel de audio del micrófono | I2S DMA | Amplitud (int) |
+| `handleModeChange()` | Avanza al siguiente modo | `ev_longHold` | `appMode` actualizado |
+| Modo 0 — Mascota | Ojos reactivos al tacto y al sonido | Eventos touch, amplitud | OLED + buzzer |
+| Modo 1 — GIFs | Reproduce `.bin` a 20 FPS | LittleFS → `data/` | OLED (U8g2) |
+| Modo 2 — Reloj | Muestra hora y fecha en español | WiFi, NTP pool.ntp.org | OLED |
+| Modo 3 — Pomodoro | Timer 25/5 min con buzzer | Eventos touch | OLED + buzzer |
+| Modo 4 — Test mic | Barra de volumen en tiempo real | I2S DMA | OLED |
 
 ---
 
+## Módulo: `procesTouch()`
+
+**Por qué existe:** Centralizar la lectura del pin evita que dos partes del código lo lean simultáneamente y pierdan eventos — un bug clásico en Arduino.
+
+**Eventos publicados (booleanos, se reinician cada ciclo):**
+
+| Variable | Cuándo es `true` |
+|----------|-----------------|
+| `ev_shortTap` | Toque corto soltado (< 800 ms) |
+| `ev_longHold` | Toque largo soltado (≥ 800 ms) |
+| `ev_isHolding` | Está presionado ≥ 800 ms ahora mismo |
+| `ev_tapsReady` | Expiró la ventana de taps (900 ms) |
+| `ev_tapCount` | Cuántos taps hubo en esa ventana |
+
+---
+
+## Módulo: Motor de ojos (spring-damper)
+
+Los ojos no "saltan" a su posición — se mueven con física de resorte amortiguado, lo que da un movimiento orgánico.
+
+**Parámetros en `struct Eye`:**
+
+| Parámetro | Valor | Efecto |
+|-----------|-------|--------|
+| `k = 0.12` | Constante del resorte | Velocidad de aproximación al objetivo |
+| `d = 0.60` | Amortiguamiento | Suavidad del freno al llegar |
+| Parpadeo | cada 2–6 s | Aleatorio, natural |
+| Saccade | cada 0.5–3 s | Movimiento espontáneo de pupilas |
+
+---
+
+## Módulo: Sistema de moods (10 estados de ánimo)
+
+| ID | Constante | Cómo se ven los ojos |
+|----|-----------|---------------------|
+| 0 | `MOOD_NORMAL` | Redondos, parpadeando |
+| 1 | `MOOD_HAPPY` | Curvados hacia arriba |
+| 2 | `MOOD_SURPRISED` | Muy abiertos |
+| 3 | `MOOD_SLEEPY` | Parpados a la mitad |
+| 4 | `MOOD_ANGRY` | Cejas en V |
+| 5 | `MOOD_SAD` | Comisuras caídas |
+| 6 | `MOOD_EXCITED` | Muy grandes y abiertos |
+| 7 | `MOOD_LOVE` | Con corazón superpuesto |
+| 8 | `MOOD_SUSPICIOUS` | Un ojo semicerrado |
+| 9 | `MOOD_DIZZY` | En espiral girando |
+
+**Cómo cambiar el mood inicial:**
+```cpp
+// En setup(), busca esta línea y cambia el valor:
+currentMood = MOOD_NORMAL;   // ← escribe cualquier MOOD_X
+```
+
+---
+
+## Modos — controles y personalización
+
+### Modo 0 — Mascota (por defecto)
+
+| Gesto | Resultado |
+|-------|-----------|
+| 1 tap | Mood aleatorio + beep 800 Hz |
+| 3+ taps rápidos | Tema de Tetris 🎵 |
+| Sonido fuerte (amp > 15 000) | `MOOD_SURPRISED` 2 segundos |
+
+**Para cambiar la melodía de 3 taps**, busca `tetrisTheme()` y modifica el array `mel[]`. Tienes un sketch de práctica en [`retos/reto-1-melodia/`](../retos/reto-1-melodia/).
+
 ### Modo 1 — GIFs
 
-Reproduce los 14 archivos `.bin` de la carpeta `data/` en secuencia, a **20 FPS**, usando la memoria LittleFS del ESP32.
+Reproduce los archivos de `data/` en secuencia a 20 FPS. Para agregar tu propio GIF convierte el archivo con `herramientas/convertidor_gifs/gif.exe` y cópialo a `data/`. Guía completa en [`retos/reto-3-gif-propio/`](../retos/reto-3-gif-propio/).
 
-**Animaciones incluidas:**
+### Modo 2 — Reloj
+
+Conecta a WiFi y sincroniza con `pool.ntp.org`. Zona horaria UTC-5 (Ecuador). Requiere editar `ssid` y `password` en el código (ver [03_firmware/README.md](../README.md), Paso 2).
+
+### Modo 3 — Pomodoro
+
+| Gesto | Resultado |
+|-------|-----------|
+| 1 tap | Iniciar / pausar |
+| 3+ taps | Reiniciar desde 25:00 |
+
+**Para cambiar la duración:**
+```cpp
+int pomoSeconds = 25 * 60;   // ← cambia 25 por los minutos que quieras
+```
+
+### Modo 4 — Test de micrófono
+
+Muestra una barra de volumen en tiempo real. Un tap reinicia el valor de pico máximo.
+
+- Barra vacía en silencio → ✅ micrófono correcto
+- Barra siempre llena → ❌ pin L/R no está a GND
+- Barra sin movimiento → ❌ verifica WS (GPIO 5), SCK (GPIO 4), SD (GPIO 3)
+
+---
+
+## Animaciones disponibles en `data/`
 
 | Archivo | Descripción |
 |---------|-------------|
 | `0.bin` | Animación por defecto |
-| `star.bin` | Estrella |
-| `bee.bin` | Abeja |
-| `bmo.bin` | BMO (personaje de Hora de Aventura) |
-| `sushi.bin` | Sushi |
-| `angry.bin`, `angry3.bin` | Expresiones de enojo |
-| `guess.bin` | Interrogación / pensando |
-| `speed.bin` | Velocidad |
-| `yakura.bin`, `gian_du.bin`, `cuoi_khinh_bi.bin`, `sung_nuoc.bin`, `sung_nuoc_2.bin` | Expresiones varias |
+| `star.bin`, `bee.bin`, `bmo.bin`, `sushi.bin` | Íconos y objetos |
+| `angry.bin`, `angry3.bin`, `gian_du.bin` | Expresiones de enojo |
+| `speed.bin`, `yakura.bin`, `cuoi_khinh_bi.bin` | Expresiones varias |
+| `sung_nuoc.bin`, `sung_nuoc_2.bin` | Más expresiones |
+| `cafe.bin`, `mario-sick.bin`, `pacman.bin` | Personajes y objetos |
 
-> Para agregar tus propias animaciones: convierte los frames a binario (128×64 px, 1 bit por píxel) y coloca el archivo `.bin` en la carpeta `data/`.
+Hay 99 GIFs adicionales en [`recursos/gifs/`](../../recursos/gifs/) para convertir y agregar.
 
 ---
 
-### Modo 2 — Reloj
+## ¿Algo no funciona en el código?
 
-Conecta a WiFi, sincroniza la hora vía NTP y muestra la hora y fecha en español (zona horaria Ecuador, UTC-5).
-
-**Configuración WiFi:** edita las líneas en el código:
-```cpp
-const char* ssid     = "TU_RED_WIFI";
-const char* password = "TU_CONTRASEÑA";
-```
+Consulta la [guía de errores comunes](../../docs/errores-comunes.md).
 
 ---
 
-### Modo 3 — Pomodoro
-
-Temporizador de productividad basado en la técnica Pomodoro:
-- **Foco:** 25 minutos
-- **Descanso:** 5 minutos
-
-**Controles:**
-- **1 toque** → iniciar / pausar
-- **3+ toques** → reiniciar
-
-Al terminar cada sesión, el buzzer emite un tono de aviso.
-
----
-
-### Modo 4 — Test de micrófono
-
-Muestra en tiempo real una barra de volumen basada en la amplitud del micrófono INMP441. Útil para verificar que el micrófono esté funcionando.
-
-- **Umbral de reacción:** amplitud > 15000
-- **Frecuencia de muestreo:** 16 kHz (I2S)
-
----
-
-## Cómo cambiar de modo
-
-Mantén presionado el sensor táctil por **más de 800 ms** hasta escuchar un tono. Cada hold largo avanza al siguiente modo en ciclo:
-
-```
-Mascota → GIFs → Reloj → Pomodoro → Micrófono → Mascota → ...
-```
-
----
-
-## Cómo subir el firmware
-
-### 1. Subir el código
-
-```bash
-# Compilar con partición huge_app (obligatorio por el tamaño)
-arduino-cli compile --fqbn esp32:esp32:esp32c6:PartitionScheme=huge_app .
-
-# Subir al ESP32 (reemplaza COM3 con tu puerto)
-arduino-cli upload -p COM3 --fqbn esp32:esp32:esp32c6 .
-```
-
-O usa las tareas de VS Code desde [02_software/](../../02_software/).
-
-### 2. Subir los archivos de animación (data/)
-
-Los archivos `.bin` deben subirse a la memoria LittleFS del ESP32 por separado:
-
-```bash
-# Instalar el plugin de LittleFS si no lo tienes
-arduino-cli core update-index
-
-# Subir filesystem (usa la tarea de VS Code o el plugin)
-arduino-cli upload -p COM3 --fqbn esp32:esp32:esp32c6 --input-dir data/
-```
-
-> Si no subes la carpeta `data/`, el Modo 1 (GIFs) no mostrará animaciones.
-
----
-
-## Solución de problemas comunes
-
-| Problema | Causa probable | Solución |
-|----------|---------------|----------|
-| Pantalla en blanco | I2C mal conectado | Verifica SDA=6, SCL=7 |
-| Error de compilación "sketch too big" | Partición incorrecta | Usa `PartitionScheme=huge_app` |
-| Reloj no sincroniza | WiFi incorrecto o sin cobertura | Verifica SSID y contraseña |
-| GIFs no se reproducen | `data/` no subida | Sube el filesystem LittleFS |
-| Micrófono sin respuesta | INMP441 mal conectado | Verifica L/R conectado a GND |
-
----
-
-## Siguiente paso
-
-¿Quieres modificar el robot? Empieza por cambiar el SSID de WiFi en el Modo 2 o agregar un nuevo estado de ánimo. El código está comentado internamente para guiarte.
+**← Anterior:** [03_firmware/](../) — carga del firmware
+**Siguiente →** [03_firmware/retos/](../retos/) — personalizar el robot

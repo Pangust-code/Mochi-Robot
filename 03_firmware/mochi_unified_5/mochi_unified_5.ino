@@ -54,8 +54,8 @@ Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 U8G2_SH1106_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0);
 
 // ── Wi-Fi / NTP ────────────────────────────────────────────────────────
-const char* ssid               = "Pixel_4531";
-const char* password           = "tigrillo";
+const char* ssid               = "TU_RED_WIFI";      // ← editar antes de subir
+const char* password           = "TU_CONTRASEÑA";   // ← editar antes de subir
 const char* ntpServer          = "pool.ntp.org";
 const long  gmtOffset_sec      = -18000;
 const int   daylightOffset_sec = 0;
@@ -568,20 +568,17 @@ void runGifMode() {
   activarU8g2();
 
   const char* arch[] = {
-    "/0.bin",
+    "/cafe.bin"
+    "/mario-sick.bin"
+    "/pacman.bin"
     "/star.bin",
-    "/sung_nuoc.bin",
     "/sushi.bin",
     "/bmo.bin",
     "/guess.bin",
     "/sung_nuoc_2.bin",
     "/speed.bin",
     "/bee.bin",
-    "/angry.bin",
-    "/yakura.bin",
-    "/gian_du.bin",
-    "/cuoi_khinh_bi.bin",
-    "/angry3.bin"
+    "/yakura.bin"
   };
 
   int totalArchivos = sizeof(arch) / sizeof(arch[0]);
