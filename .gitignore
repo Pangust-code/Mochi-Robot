@@ -27,8 +27,10 @@ $RECYCLE.BIN/
 
 # ── Convertidor de GIFs (archivos generados, no subir al repo) ─────────────
 herramientas/convertidor_gifs/data/
-herramientas/convertidor_gifs/*/          # carpetas de frames generadas por gif.exe
-!herramientas/convertidor_gifs/README.md  # mantener el README aunque la carpeta esté vacía
+herramientas/convertidor_gifs/*/                                    # carpetas de frames (gif.exe)
+!herramientas/convertidor_gifs/README.md
+!herramientas/convertidor_gifs/armado_ejecutable_frame_to_bin_converter/   # fuentes del compresor
+herramientas/convertidor_gifs/armado_ejecutable_frame_to_bin_converter/build_temp/
 
 # ── GIFs fuente (binarios grandes — usar Git LFS o gestionar localmente) ────
 # Descomenta la siguiente línea si NO quieres rastrear los GIFs en git:

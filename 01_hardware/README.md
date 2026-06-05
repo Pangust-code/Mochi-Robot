@@ -60,20 +60,7 @@ Aquí encontrarás todo lo que necesitas comprar y cómo conectarlo.
 
 ## Diagrama de conexión
 
-```
-                    ESP32-C6 Supermini
-                   ┌──────────────────┐
-              3.3V │●  ●  ●  ●  ●  ●  │ GND
-                   │  GPIO2  GPIO3    │
-                   │  GPIO4  GPIO5    │
-                   │  GPIO6  GPIO7    │
-                   │        GPIO19    │
-                   └──────────────────┘
-                        │        │
-              ┌─────────┘        └──────────┐
-              │                             │
-         [TTP223]   [INMP441]   [OLED]  [Buzzer]
-```
+![Diagrama de cableado Mochi Robot](circuit_image.png)
 
 > Conecta todos los VCC a 3.3V y todos los GND entre sí.
 
