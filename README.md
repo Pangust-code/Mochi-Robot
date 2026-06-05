@@ -299,19 +299,24 @@ Hard resetting via RTS pin...
 
 ### 2.5 Subir las animaciones GIF (LittleFS)
 
-Las animaciones del Modo 1 se almacenan en la memoria interna del ESP32 como archivos `.bin`. Deben subirse por separado al sistema de archivos LittleFS.
+Las animaciones del Modo 1 se almacenan en la memoria interna del ESP32 como archivos `.bin`. Deben subirse por separado al sistema de archivos LittleFS usando la extensión **arduino-littlefs-upload** para VS Code.
 
-#### Opción A — Plugin de Arduino IDE (recomendada para principiantes)
-1. Instala el plugin **ESP32 LittleFS Data Upload** para Arduino IDE.
-2. Coloca los archivos `.bin` en `03_firmware/mochi_unified_5/data/`.
-3. Ve a **Herramientas → ESP32 LittleFS Data Upload**.
+#### Instalar la extensión (una sola vez)
 
-#### Opción B — arduino-cli con esptool
+> Guía en video: [youtube.com/watch?v=vICDKOLizrU](https://www.youtube.com/watch?v=vICDKOLizrU)
+
+1. Descarga **[arduino-littlefs-upload-1.5.4.vsix](https://github.com/earlephilhower/arduino-littlefs-upload/releases/download/1.5.4/arduino-littlefs-upload-1.5.4.vsix)**
+2. En VS Code: `Ctrl+Shift+X` → `···` → **Instalar desde VSIX...** → selecciona el archivo
+3. Reinicia VS Code.
+
+#### Subir los archivos
+
+1. Cierra el Monitor Serie.
+2. `Ctrl+Shift+P` → **Upload LittleFS to Pico/ESP8266/ESP32**
+
+#### Opción alternativa — esptool
 ```powershell
-# Generar imagen LittleFS (requiere mklittlefs)
 mklittlefs -c 03_firmware/mochi_unified_5/data -p 256 -b 4096 -s 0x150000 littlefs.bin
-
-# Subir la imagen
 esptool.py --chip esp32c6 --port COM3 write_flash 0x290000 littlefs.bin
 ```
 

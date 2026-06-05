@@ -39,3 +39,5 @@ herramientas/convertidor_gifs/armado_ejecutable_frame_to_bin_converter/build_tem
 # ── Logs y temporales ──────────────────────────────────────────────────────
 *.log
 *.tmp
+
+docs/facilitador.md

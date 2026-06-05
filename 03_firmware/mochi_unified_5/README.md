@@ -182,5 +182,105 @@ Consulta la [guía de errores comunes](../../docs/errores-comunes.md).
 
 ---
 
+## Fase 5 — Configuración e integración final
+
+Esta sección es el último paso antes de cerrar la carcasa. Editarás únicamente la **sección de configuración** del firmware — no necesitas entender el resto del código para completarla.
+
+### Qué editar en `mochi_unified_5.ino`
+
+Abre el archivo y localiza el bloque de configuración cerca del inicio (líneas 50–80 aproximadamente). Solo modificarás valores dentro de ese bloque.
+
+#### 1. Credenciales WiFi
+
+Necesarias para el Modo 2 (Reloj). Si no vas a usar el reloj, puedes dejarlo en blanco.
+
+```cpp
+const char* ssid     = "NOMBRE_DE_TU_RED";   // ← tu red WiFi 2.4 GHz
+const char* password = "TU_CONTRASEÑA";
+```
+
+#### 2. Umbral de sonido (valor de tu Fase 2)
+
+Este es el valor que mediste en la Prueba 08. Un sonido por encima de este umbral hace que Mochi se sobresalte.
+
+```cpp
+const int SOUND_THRESHOLD = 15000;   // ← reemplaza con tu valor de la Fase 2
+```
+
+> Si no modificas este valor, el umbral por defecto (15 000) puede no corresponder a tu entorno.
+
+#### 3. Nombres de archivos de animación
+
+Si convertiste GIFs propios en la Fase 4, agrega sus nombres al array de la lista de archivos. Busca la sección donde se listan los `.bin`:
+
+```cpp
+// Ejemplo: si convertiste "feliz.bin" y "enojado.bin"
+// Asegúrate de que esos archivos estén en data/ y hayan sido subidos por LittleFS
+```
+
+El firmware carga automáticamente todos los `.bin` que encuentre en `data/` — solo asegúrate de que los archivos estén subidos correctamente.
+
+---
+
+### Pasos para subir el firmware configurado
+
+**1. Compilar con la partición correcta:**
+
+```powershell
+arduino-cli compile --fqbn esp32:esp32:esp32c6:PartitionScheme=huge_app 03_firmware/mochi_unified_5
+```
+
+**2. Subir el firmware:**
+
+```powershell
+arduino-cli upload -p COM3 --fqbn esp32:esp32:esp32c6:PartitionScheme=huge_app 03_firmware/mochi_unified_5
+```
+
+**3. Subir las animaciones (LittleFS):**
+
+Cierra el Monitor Serie → `Ctrl+Shift+P` → **Upload LittleFS to Pico/ESP8266/ESP32**.
+
+> Si aún no tienes la extensión instalada, sigue la guía en [herramientas/README.md](../../herramientas/README.md) — Paso 5.
+
+**4. Abrir el Monitor Serie y verificar:**
+
+```powershell
+arduino-cli monitor -p COM3 -b esp32:esp32:esp32c6:PartitionScheme=huge_app -c baudrate=115200
+```
+
+Salida esperada al iniciar correctamente:
+
+```
+=== MOCHI v6 ===
+LittleFS OK — XX/128 KB
+I2S: inicializado
+-> Modo 0 (Mascota)
+```
+
+---
+
+### Checklist — Fase 5
+
+- [ ] WiFi configurado (o dejado vacío a propósito)
+- [ ] Umbral de sonido ingresado con el valor de tu Fase 2
+- [ ] Compilación sin errores (`PartitionScheme=huge_app`)
+- [ ] Subida exitosa ("Hard resetting via RTS pin")
+- [ ] Monitor Serie muestra `=== MOCHI v6 ===`
+- [ ] Pantalla OLED muestra ojos animados (Modo 0)
+- [ ] Tocar el sensor cambia el mood
+- [ ] Hold largo cambia de modo
+- [ ] Modo 1 muestra tus animaciones personalizadas
+- [ ] Carcasa cerrada ✅
+
+---
+
+### Arquitectura del sistema completo
+
+Para entender cómo fluye la información desde el hardware hasta la respuesta visual, consulta:
+
+**[docs/arquitectura.md](../../docs/arquitectura.md)** — diagramas Mermaid del hardware, firmware y pipeline IoT
+
+---
+
 **← Anterior:** [03_firmware/](../) — carga del firmware
 **Siguiente →** [03_firmware/retos/](../retos/) — personalizar el robot

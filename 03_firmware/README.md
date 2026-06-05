@@ -10,10 +10,10 @@ Esta carpeta contiene todo el código del robot. Aquí compilarás y cargarás e
 
 ```
 03_firmware/
-├── mochi_unified_5/     ← Firmware principal — usa este
+├── mochi_unified_5/              ← Firmware principal — usa este
 │   ├── mochi_unified_5.ino
-│   └── data/            ← Animaciones GIF (.bin) para el Modo 1
-├── pruebas/             ← Sketches para verificar el hardware (seguir en orden)
+│   └── data/                     ← Animaciones GIF (.bin) para el Modo 1
+├── pruebas/                      ← Sketches para verificar el hardware
 │   ├── 01_prueba_pantalla/
 │   ├── 02_prueba_touch/
 │   ├── 03_prueba_buzzer/
@@ -21,9 +21,18 @@ Esta carpeta contiene todo el código del robot. Aquí compilarás y cargarás e
 │   ├── 05_prueba_wifi/
 │   ├── 06_prueba_littlefs/
 │   ├── 07_prueba_conexion_microfono/
-│   └── 08_prueba_sonido_microfono/
-├── retos/               ← Personalización del robot (Sección 4)
-└── referencia/          ← Versión anterior del firmware (solo consulta)
+│   ├── 08_prueba_sonido_microfono/
+│   ├── 09_transcripcion/         ← Avanzado: Whisper + servidor local
+│   ├── 10_codigo_funcional_transcripcion/  ← Avanzado: pipeline IoT completo
+│   └── 11_prueba_canvas/         ← Avanzado: canvas experimental
+├── retos/                        ← Personalización del robot (Sección 4)
+│   ├── reto-1-melodia/
+│   ├── reto-2-mood-wink/
+│   ├── reto-3-gif-propio/
+│   ├── reto-4-aplausos/
+│   ├── reto-5-chromedino/        ← Easter Egg: Chrome Dino en OLED
+│   └── reto-6-flappybird/        ← Easter Egg: Flappy Bird en OLED
+└── referencia/                   ← Firmware v4 (ESP32 clásico, solo consulta)
 ```
 
 ---
@@ -39,23 +48,37 @@ Esta carpeta contiene todo el código del robot. Aquí compilarás y cargarás e
 
 ## Paso 1 — Verificar el hardware con los sketches de prueba
 
-Antes de cargar el firmware completo, verifica que cada componente está bien conectado. Los sketches están numerados — síguelos en orden:
+Antes de cargar el firmware completo, verifica que cada componente está bien conectado. Los sketches están numerados — síguelos en orden.
 
-| # | Sketch | ¿Qué verifica? |
+> Guía detallada con tablas de registro de valores: [pruebas/README.md](pruebas/README.md)
+
+### Sketches del taller (01–08)
+
+| # | Sketch | ¿Qué verifica? | Fase del taller |
+|---|--------|----------------|----------------|
+| 01 | [`01_prueba_pantalla/`](pruebas/01_prueba_pantalla/) | Pantalla OLED (I2C, texto, gráficos) | Fase 1 |
+| 02 | [`02_prueba_touch/`](pruebas/02_prueba_touch/) | Sensor táctil TTP223 | Fase 2 |
+| 03 | [`03_prueba_buzzer/`](pruebas/03_prueba_buzzer/) | Buzzer pasivo (sweep + escala + tonos) | Opcional |
+| 04 | [`04_prueba_sonido_beta/`](pruebas/04_prueba_sonido_beta/) | Buzzer básico con `ledcWriteTone` | Opcional |
+| 05 | [`05_prueba_wifi/`](pruebas/05_prueba_wifi/) | Conexión WiFi e IP asignada | Fase 1 |
+| 06 | [`06_prueba_littlefs/`](pruebas/06_prueba_littlefs/) | Sistema de archivos LittleFS | Opcional |
+| 07 | [`07_prueba_conexion_microfono/`](pruebas/07_prueba_conexion_microfono/) | Pines físicos del INMP441 (I2S) | Fase 2 |
+| 08 | [`08_prueba_sonido_microfono/`](pruebas/08_prueba_sonido_microfono/) | Captura de audio y niveles de amplitud | Fase 2 |
+
+### Sketches avanzados (09–11) — integración con servidor
+
+| # | Sketch | Para qué sirve |
 |---|--------|----------------|
-| 01 | [`01_prueba_pantalla/`](pruebas/01_prueba_pantalla/) | Pantalla OLED (I2C, texto, gráficos) |
-| 02 | [`02_prueba_touch/`](pruebas/02_prueba_touch/) | Sensor táctil TTP223 |
-| 03 | [`03_prueba_buzzer/`](pruebas/03_prueba_buzzer/) | Buzzer pasivo (sweep + escala + tonos del firmware) |
-| 04 | [`04_prueba_sonido_beta/`](pruebas/04_prueba_sonido_beta/) | Buzzer básico con `ledcWriteTone` |
-| 05 | [`05_prueba_wifi/`](pruebas/05_prueba_wifi/) | Conexión WiFi e IP asignada |
-| 06 | [`06_prueba_littlefs/`](pruebas/06_prueba_littlefs/) | Sistema de archivos LittleFS |
-| 07 | [`07_prueba_conexion_microfono/`](pruebas/07_prueba_conexion_microfono/) | Pines físicos del INMP441 |
-| 08 | [`08_prueba_sonido_microfono/`](pruebas/08_prueba_sonido_microfono/) | Captura de audio en tiempo real |
+| 09 | [`09_transcripcion/`](pruebas/09_transcripcion/) | Graba audio PCM16 y transcribe con Whisper (servidor Python local) |
+| 10 | [`10_codigo_funcional_transcripcion/`](pruebas/10_codigo_funcional_transcripcion/) | Pipeline IoT completo: PCM16 → servidor → `mood_id` + intención en pantalla |
+| 11 | [`11_prueba_canvas/`](pruebas/11_prueba_canvas/) | Prueba experimental de canvas gráfico |
 
-**Subir un sketch de prueba** (reemplaza `01_prueba_pantalla` por el número correspondiente):
+**Subir un sketch de prueba** (reemplaza `01_prueba_pantalla` por el que corresponda):
+
 ```powershell
 arduino-cli compile --fqbn esp32:esp32:esp32c6 03_firmware/pruebas/01_prueba_pantalla
 arduino-cli upload -p COM3 --fqbn esp32:esp32:esp32c6 03_firmware/pruebas/01_prueba_pantalla
+arduino-cli monitor -p COM3 -b esp32:esp32:esp32c6 -c baudrate=115200
 ```
 
 > Los sketches de prueba son pequeños — **no necesitan** `PartitionScheme=huge_app`.
@@ -64,14 +87,14 @@ arduino-cli upload -p COM3 --fqbn esp32:esp32:esp32c6 03_firmware/pruebas/01_pru
 
 ## Paso 2 — Configurar el WiFi (solo si vas a usar el Modo Reloj)
 
-Abre [`mochi_unified_5/mochi_unified_5.ino`](mochi_unified_5/mochi_unified_5.ino) y edita las líneas 57–58:
+Abre [`mochi_unified_5/mochi_unified_5.ino`](mochi_unified_5/mochi_unified_5.ino) y edita las credenciales en la sección de configuración al inicio del archivo:
 
 ```cpp
-const char* ssid     = "TU_RED_WIFI";      // ← nombre de tu red
+const char* ssid     = "TU_RED_WIFI";      // ← nombre de tu red 2.4 GHz
 const char* password = "TU_CONTRASEÑA";   // ← contraseña
 ```
 
-> Sin WiFi configurado, los modos 0, 1, 3 y 4 funcionan con normalidad.
+> Sin WiFi configurado, los modos 0, 1, 3 y 4 funcionan con normalidad. Solo el **Modo 2 (Reloj)** requiere conexión.
 
 ---
 
@@ -81,9 +104,9 @@ const char* password = "TU_CONTRASEÑA";   // ← contraseña
 arduino-cli compile --fqbn esp32:esp32:esp32c6:PartitionScheme=huge_app 03_firmware/mochi_unified_5
 ```
 
-> `PartitionScheme=huge_app` es **obligatorio** para el firmware principal — el binario es grande y no cabe en la partición por defecto.
+> `PartitionScheme=huge_app` es **obligatorio** — el firmware completo no cabe en la partición por defecto.
 
-✅ Compilación exitosa:
+Compilación exitosa:
 ```
 Sketch uses XXXXXX bytes (XX%) of program storage space.
 ```
@@ -96,7 +119,7 @@ Sketch uses XXXXXX bytes (XX%) of program storage space.
 arduino-cli upload -p COM3 --fqbn esp32:esp32:esp32c6:PartitionScheme=huge_app 03_firmware/mochi_unified_5
 ```
 
-✅ Subida exitosa:
+Subida exitosa:
 ```
 Hash of data verified.
 Hard resetting via RTS pin...
@@ -106,14 +129,22 @@ Hard resetting via RTS pin...
 
 ## Paso 5 — Subir las animaciones GIF (LittleFS)
 
-Las animaciones del Modo 1 se almacenan en la flash del ESP32 como archivos `.bin` y deben subirse por separado. Los archivos están en [`mochi_unified_5/data/`](mochi_unified_5/data/).
+Las animaciones del Modo 1 se almacenan como archivos `.bin` en la flash del ESP32 y deben subirse por separado. Los archivos están en [`mochi_unified_5/data/`](mochi_unified_5/data/).
 
-**Opción A — Plugin Arduino IDE:**
-1. Instala el plugin **ESP32 LittleFS Data Upload**.
-2. Abre el sketch en Arduino IDE.
-3. **Herramientas → ESP32 LittleFS Data Upload**.
+### Instalar la extensión arduino-littlefs-upload (una sola vez)
 
-**Opción B — esptool:**
+> Guía en video: [youtube.com/watch?v=vICDKOLizrU](https://www.youtube.com/watch?v=vICDKOLizrU)
+
+1. Descarga **[arduino-littlefs-upload-1.5.4.vsix](https://github.com/earlephilhower/arduino-littlefs-upload/releases/download/1.5.4/arduino-littlefs-upload-1.5.4.vsix)**
+2. En VS Code: panel **Extensiones** (`Ctrl+Shift+X`) → `···` → **Instalar desde VSIX...**
+3. Selecciona el archivo descargado → reinicia VS Code.
+
+### Subir los archivos
+
+1. Cierra el Monitor Serie si está abierto.
+2. `Ctrl+Shift+P` → **Upload LittleFS to Pico/ESP8266/ESP32**
+
+**Opción alternativa — esptool:**
 ```powershell
 mklittlefs -c 03_firmware/mochi_unified_5/data -p 256 -b 4096 -s 0x150000 littlefs.bin
 esptool.py --chip esp32c6 --port COM3 write_flash 0x290000 littlefs.bin
@@ -123,13 +154,13 @@ esptool.py --chip esp32c6 --port COM3 write_flash 0x290000 littlefs.bin
 
 ---
 
-## Paso 6 — Verificar con el monitor serial
+## Paso 6 — Verificar con el Monitor Serie
 
 ```powershell
 arduino-cli monitor -p COM3 -b esp32:esp32:esp32c6:PartitionScheme=huge_app -c baudrate=115200
 ```
 
-✅ Salida esperada al iniciar:
+Salida esperada al iniciar correctamente:
 ```
 === MOCHI v6 ===
 LittleFS OK — 42/128 KB
@@ -137,28 +168,25 @@ I2S: inicializado
 -> Modo 0 (Mascota)
 ```
 
-**Con VS Code:** `Ctrl+Shift+B` para compilar, o **Terminal → Run Task** para ver todas las tareas.
+Si ves `LittleFS: error` → repite el Paso 5.
+
+**Con VS Code:** usa las tareas preconfiguradas desde **Terminal → Run Task**.
 
 ---
 
-## ✅ Checklist — Sección 2
+## Checklist — Sección 2
 
-- [ ] Todos los sketches de prueba 01–08 se ejecutan correctamente
-- [ ] La compilación del firmware principal termina sin errores
+- [ ] Sketch `01_prueba_pantalla` muestra texto y gráficos en la OLED
+- [ ] Sketch `05_prueba_wifi` muestra una IP en el Monitor Serie
+- [ ] Sketch `02_prueba_touch` detecta correctamente el sensor táctil
+- [ ] Sketch `07_prueba_conexion_microfono` no reporta error de pines I2S
+- [ ] Sketch `08_prueba_sonido_microfono` muestra valores de amplitud variables con el sonido
+- [ ] La compilación del firmware principal termina sin errores (`PartitionScheme=huge_app`)
 - [ ] La subida termina con "Hard resetting via RTS pin"
-- [ ] El monitor serial muestra `=== MOCHI v6 ===`
-- [ ] La pantalla OLED muestra ojos animados
-- [ ] Al tocar el sensor se escucha un beep y los ojos cambian
-- [ ] Al hacer hold (≥ 800 ms) se escucha otro beep y el modo cambia
-
----
-
-## Sketches avanzados (integración con servidor)
-
-| # | Sketch | Para qué sirve |
-|---|--------|----------------|
-| 09 | [`09_transcripcion/`](pruebas/09_transcripcion/) | Graba audio y transcribe con Whisper (servidor Python local) |
-| 10 | [`10_codigo_funcional_transcripcion/`](pruebas/10_codigo_funcional_transcripcion/) | Integración completa: PCM16 → servidor → mood_id + intent en pantalla |
+- [ ] El Monitor Serie muestra `=== MOCHI v6 ===` y `LittleFS OK`
+- [ ] La pantalla OLED muestra ojos animados al encender
+- [ ] 1 tap cambia el estado de ánimo y se escucha un beep
+- [ ] Hold largo (≥ 800 ms) cambia de modo
 
 ---
 
@@ -169,4 +197,4 @@ Consulta la [guía de errores comunes](../docs/errores-comunes.md).
 ---
 
 **← Anterior:** [02_software/](../02_software/) — preparación del entorno
-**Siguiente →** [mochi_unified_5/](mochi_unified_5/) — entender las funciones del robot
+**Siguiente →** [pruebas/](pruebas/) — diagnóstico de hardware (Fases 1 y 2)

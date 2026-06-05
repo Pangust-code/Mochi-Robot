@@ -167,6 +167,51 @@ graph LR
 
 ---
 
+## Diagrama del pipeline IoT — Fase 5 (integración completa)
+
+Este diagrama muestra el flujo completo cuando Mochi captura audio, lo envía a un servidor en la nube y reacciona con una animación personalizada.
+
+```mermaid
+flowchart LR
+    MIC["🎙 Micrófono\nINMP441\n(I2S 16kHz)"]
+    ESP["⚙️ ESP32-C6\nCaptura PCM16\ny comprime"]
+    HTTP["📡 HTTP POST\nWiFi 2.4 GHz"]
+    SERVER["☁️ Servidor\nRailway / Cloud"]
+    PROC["🧠 Procesamiento\nWhisper / NLP"]
+    INTENT["💬 Intención\njson: mood_id"]
+    FS["💾 LittleFS\nflash interna"]
+    GIF["🖼 GIF .bin\npersonalizado"]
+    OLED["📺 Pantalla OLED\n128×64 px"]
+
+    MIC -->|"muestras de audio"| ESP
+    ESP -->|"payload PCM16"| HTTP
+    HTTP -->|"POST /audio"| SERVER
+    SERVER --> PROC
+    PROC -->|"texto transcrito"| INTENT
+    INTENT -->|"mood_id + nombre .bin"| ESP
+    ESP -->|"busca archivo"| FS
+    FS -->|"frames del GIF"| GIF
+    GIF -->|"bitmap 1bpp"| OLED
+```
+
+### Descripción de cada etapa
+
+| Etapa | Componente | Qué hace |
+|-------|-----------|---------|
+| Captura | INMP441 + I2S | Digitaliza el audio a 16 kHz, 16 bits |
+| Procesamiento local | ESP32-C6 | Acumula muestras y arma el payload |
+| Transmisión | WiFi + HTTP POST | Envía el audio al servidor externo |
+| Transcripción | Whisper (servidor) | Convierte audio a texto |
+| Interpretación | NLP / reglas | Detecta la intención o emoción del mensaje |
+| Respuesta | JSON `{mood_id, file}` | El servidor responde con qué mostrar |
+| Recuperación | LittleFS | El ESP32 abre el `.bin` correspondiente de la flash |
+| Visualización | U8g2 + OLED | Reproduce el GIF frame a frame a 20 FPS |
+
+> Este pipeline requiere el sketch `10_codigo_funcional_transcripcion` y un servidor desplegado.
+> Consulta [`03_firmware/pruebas/10_codigo_funcional_transcripcion/`](../03_firmware/pruebas/10_codigo_funcional_transcripcion/) para la implementación.
+
+---
+
 ## Módulos del firmware y sus responsabilidades
 
 ```mermaid

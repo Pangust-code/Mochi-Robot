@@ -22,8 +22,8 @@ arduino-cli monitor -p COM3 -b esp32:esp32:esp32c6 -c baudrate=115200
 
 Aplaude frente al micrófono. Debes ver en el monitor serial:
 ```
-👏 Aplauso detectado! Contador: 1  (amp=28431)
-👏 Aplauso detectado! Contador: 2  (amp=31200)
+Aplauso detectado! Contador: 1  (amp=28431)
+Aplauso detectado! Contador: 2  (amp=31200)
 ```
 
 ### Calibración

@@ -4,8 +4,8 @@ Agrega una animación GIF personalizada al Modo 1 del robot.
 
 ## Nivel
 
-- ⭐ Fácil si usas un GIF existente de `recursos/gifs/`
-- ⭐⭐ Medio si creas el GIF desde cero
+- Fácil si usas un GIF existente de `recursos/gifs/`
+- Medio si creas el GIF desde cero
 
 ---
 
