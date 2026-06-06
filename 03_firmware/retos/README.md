@@ -24,8 +24,11 @@ retos/
 │   ├── chromeDino.ino
 │   ├── t-rex-duino.h          ← variables de física y dificultad aquí
 │   └── TRexCore.h
-└── reto-6-flappybird/         ← Easter Egg: Flappy Bird en OLED
-    └── flappyBird.ino         ← variables de física al inicio del archivo
+├── reto-6-flappybird/         ← Easter Egg: Flappy Bird en OLED
+│   └── flappyBird.ino         ← variables de física al inicio del archivo
+├── reto-7-espejo-emocional/   ← Reto nuevo: moods según el sonido ambiental
+├── reto-8-alarma-reloj/      ← Reto nuevo: alarma visual y sonora para el reloj
+└── reto-9-bienvenida/        ← Reto nuevo: animación de arranque
 ```
 
 ---
@@ -40,6 +43,9 @@ retos/
 | 2 | [Nuevo mood: guiño](reto-2-mood-wink/) | Medio | Agregar constante + máscara de párpado + tamaño |
 | 3 | [GIF personalizado](reto-3-gif-propio/) | Medio | Convertir GIF y subirlo a LittleFS |
 | 4 | [Contador de aplausos](reto-4-aplausos/) | Difícil | Agregar Modo 5 con detección de audio |
+| 7 | [Espejo emocional](reto-7-espejo-emocional/) | Medio | Cambiar moods según amplitud del micrófono |
+| 11 | [Alarma para el reloj](reto-8-alarma-reloj/) | Medio | Disparar sonido y mensaje en una hora fija |
+| 16 | [Pantalla de inicio animada](reto-9-bienvenida/) | Fácil | Mostrar una secuencia visual al arrancar |
 
 ---
 
@@ -171,16 +177,6 @@ arduino-cli monitor -p COM3 -b esp32:esp32:esp32c6 -c baudrate=115200
 **Fase 2 — Integrar como Modo 5:** cuando la detección funcione, el README te guía con los 3 cambios exactos en `mochi_unified_5.ino`.
 
 Guía completa → [reto-4-aplausos/README.md](reto-4-aplausos/README.md)
-
----
-
-## ¿Quieres más retos?
-
-Ideas para seguir explorando:
-
-- **Modo "Espejo":** los ojos reflejan el nivel de ruido en tiempo real (SLEEPY en silencio → EXCITED con ruido).
-- **Reacción por hora:** si son las 12:00 en el Modo Reloj, reproduce una melodía especial.
-- **Pomodoro con animación:** al terminar el Pomodoro, muestra el Modo 1 durante 10 segundos antes de volver.
 
 ---
 
