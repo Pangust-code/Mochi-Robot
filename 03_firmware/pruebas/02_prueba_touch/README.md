@@ -45,3 +45,4 @@ Para que los scripts funcionen correctamente, el cableado entre el microcontrola
 ```cpp
 #define HOLD_MS       800    // Ventana mínima para pulsación larga (HOLD) [cite: 49]
 #define MULTITAP_MS   400    // Ventana máxima para acumular taps sucesivos [cite: 49]
+```
