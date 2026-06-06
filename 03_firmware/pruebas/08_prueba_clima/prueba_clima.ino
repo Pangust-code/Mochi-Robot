@@ -69,7 +69,7 @@ WiFiCredential networks[] = {
 };
 const int NUM_NETWORKS = sizeof(networks) / sizeof(networks[0]);
 
-const char* OWM_API_KEY = "5aafee3b82187abfbc856645942658ef";   // openweathermap.org → gratuito
+const char* OWM_API_KEY = "TE_CLAVE_API_CLIMA";   // openweathermap.org → gratuito
 const char* OWM_CITY    = "Cuenca";
 const char* OWM_COUNTRY = "EC";           // código ISO del país
 const char* OWM_UNITS   = "metric";       // metric=°C, imperial=°F
