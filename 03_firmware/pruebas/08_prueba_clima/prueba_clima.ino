@@ -26,9 +26,49 @@
 #include <time.h>
 #include <math.h>
 
+// ── ENABLE_ENTERPRISE: true = incluye stack WPA2-Enterprise (UPS) ───────
+// ── Dejar false si solo usas redes WPA2-Personal — ahorra ~21 KB flash ──
+#define ENABLE_ENTERPRISE true
+
+#if ENABLE_ENTERPRISE
+#  if __has_include(<esp_eap_client.h>)
+#    include <esp_eap_client.h>
+#    define EAP_ENABLE()          esp_wifi_sta_enterprise_enable()
+#    define EAP_SET_IDENTITY(u,n) esp_eap_client_set_identity((const uint8_t*)(u),(n))
+#    define EAP_SET_USERNAME(u,n) esp_eap_client_set_username((const uint8_t*)(u),(n))
+#    define EAP_SET_PASSWORD(p,n) esp_eap_client_set_password((const uint8_t*)(p),(n))
+#  else
+#    include <esp_wpa2.h>
+#    define EAP_ENABLE()          esp_wifi_sta_wpa2_ent_enable()
+#    define EAP_SET_IDENTITY(u,n) esp_wifi_sta_wpa2_ent_set_identity((uint8_t*)(u),(n))
+#    define EAP_SET_USERNAME(u,n) esp_wifi_sta_wpa2_ent_set_username((uint8_t*)(u),(n))
+#    define EAP_SET_PASSWORD(p,n) esp_wifi_sta_wpa2_ent_set_password((uint8_t*)(p),(n))
+#  endif
+#else
+#  define EAP_ENABLE()
+#  define EAP_SET_IDENTITY(u,n)
+#  define EAP_SET_USERNAME(u,n)
+#  define EAP_SET_PASSWORD(p,n)
+#endif
+
 // ── Configuración del usuario ──────────────────────────────────────────
-const char* WIFI_SSID   = "TU_RED_WIFI";
-const char* WIFI_PASS   = "TU_CONTRASEÑA";
+struct WiFiCredential {
+  const char* ssid;
+  const char* password;
+  bool        enterprise;    // true = WPA2-Enterprise (EAP-TTLS)
+  const char* eap_identity;  // solo si enterprise = true
+  const char* eap_password;  // solo si enterprise = true
+};
+
+WiFiCredential networks[] = {
+  // WPA2-Personal (redes domésticas — mayor prioridad primero)
+  {"TU_RED_WIFI",      "TU_CONTRASEÑA",          false, "", ""},
+  // WPA2-Enterprise (red universitaria)
+  {"TU_RED_ENTERPRISE", "",                  true,
+   "tu_usuario@universidad.edu", "tu_contraseña_eap"},
+};
+const int NUM_NETWORKS = sizeof(networks) / sizeof(networks[0]);
+
 const char* OWM_API_KEY = "5aafee3b82187abfbc856645942658ef";   // openweathermap.org → gratuito
 const char* OWM_CITY    = "Cuenca";
 const char* OWM_COUNTRY = "EC";           // código ISO del país
@@ -256,6 +296,28 @@ void drawIconSmall(int cx, int cy, int cat) {
 void showMsg(const char* line1, const char* line2 = nullptr);
 
 // ── Conectar WiFi ──────────────────────────────────────────────────────
+bool connectWPA2Personal(const WiFiCredential& c) {
+  WiFi.disconnect(true); delay(100);
+  WiFi.begin(c.ssid, c.password);
+  for (int i = 0; i < 20 && WiFi.status() != WL_CONNECTED; i++) delay(500);
+  return WiFi.status() == WL_CONNECTED;
+}
+
+bool connectWPA2Enterprise(const WiFiCredential& c) {
+#if ENABLE_ENTERPRISE
+  WiFi.disconnect(true); delay(100);
+  EAP_SET_IDENTITY(c.eap_identity, strlen(c.eap_identity));
+  EAP_SET_USERNAME(c.eap_identity, strlen(c.eap_identity));
+  EAP_SET_PASSWORD(c.eap_password, strlen(c.eap_password));
+  EAP_ENABLE();
+  WiFi.begin(c.ssid);
+  for (int i = 0; i < 30 && WiFi.status() != WL_CONNECTED; i++) delay(500);
+  return WiFi.status() == WL_CONNECTED;
+#else
+  return false;
+#endif
+}
+
 bool connectWiFi() {
   display.clearDisplay();
   display.setTextColor(SH110X_WHITE);
@@ -265,11 +327,12 @@ bool connectWiFi() {
   display.display();
 
   WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-  for (int i = 0; i < 20 && WiFi.status() != WL_CONNECTED; i++)
-    delay(500);
-
-  return WiFi.status() == WL_CONNECTED;
+  for (int n = 0; n < NUM_NETWORKS; n++) {
+    WiFiCredential& c = networks[n];
+    if (c.enterprise ? connectWPA2Enterprise(c) : connectWPA2Personal(c))
+      return true;
+  }
+  return false;
 }
 
 // ── Fetch: clima actual ────────────────────────────────────────────────

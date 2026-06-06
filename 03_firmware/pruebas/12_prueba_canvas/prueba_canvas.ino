@@ -22,7 +22,7 @@
 
   Cómo configurar:
     1. Cambia DEVICE_ID con un nombre único para este ESP32
-    2. Ajusta WIFI_SSID / WIFI_PASS
+    2. Edita networks[] con tus credenciales WiFi (WPA2-Personal y/o Enterprise)
     3. Ajusta WS_HOST con tu dominio de Railway (sin https://)
        Ejemplo: "dasaimochiservidor-production.up.railway.app"
 */
@@ -33,11 +33,50 @@
 #include <Wire.h>
 #include <U8g2lib.h>
 
+// ── ENABLE_ENTERPRISE: true = incluye stack WPA2-Enterprise (UPS) ───────
+// ── Dejar false si solo usas redes WPA2-Personal — ahorra ~21 KB flash ──
+#define ENABLE_ENTERPRISE true
+
+#if ENABLE_ENTERPRISE
+#  if __has_include(<esp_eap_client.h>)
+#    include <esp_eap_client.h>
+#    define EAP_ENABLE()          esp_wifi_sta_enterprise_enable()
+#    define EAP_SET_IDENTITY(u,n) esp_eap_client_set_identity((const uint8_t*)(u),(n))
+#    define EAP_SET_USERNAME(u,n) esp_eap_client_set_username((const uint8_t*)(u),(n))
+#    define EAP_SET_PASSWORD(p,n) esp_eap_client_set_password((const uint8_t*)(p),(n))
+#  else
+#    include <esp_wpa2.h>
+#    define EAP_ENABLE()          esp_wifi_sta_wpa2_ent_enable()
+#    define EAP_SET_IDENTITY(u,n) esp_wifi_sta_wpa2_ent_set_identity((uint8_t*)(u),(n))
+#    define EAP_SET_USERNAME(u,n) esp_wifi_sta_wpa2_ent_set_username((uint8_t*)(u),(n))
+#    define EAP_SET_PASSWORD(p,n) esp_wifi_sta_wpa2_ent_set_password((uint8_t*)(p),(n))
+#  endif
+#else
+#  define EAP_ENABLE()
+#  define EAP_SET_IDENTITY(u,n)
+#  define EAP_SET_USERNAME(u,n)
+#  define EAP_SET_PASSWORD(p,n)
+#endif
+
 // ── CONFIGURACIÓN PERSONAL ──────────────────────────────────────────────────
 #define DEVICE_ID  "especito"          // ← nombre único de este dispositivo
 
-const char* WIFI_SSID = "TU_RED_WIFI";
-const char* WIFI_PASS = "TU_CONTRASEÑA";
+struct WiFiCredential {
+  const char* ssid;
+  const char* password;
+  bool        enterprise;    // true = WPA2-Enterprise (EAP-TTLS)
+  const char* eap_identity;  // solo si enterprise = true
+  const char* eap_password;  // solo si enterprise = true
+};
+
+WiFiCredential networks[] = {
+  // WPA2-Personal (redes domésticas — mayor prioridad primero)
+  {"TU_RED_WIFI",      "TU_CONTRASEÑA",          false, "", ""},
+  // WPA2-Enterprise (red universitaria)
+  {"TU_RED_ENTERPRISE", "",                  true,
+   "tu_usuario@universidad.edu", "tu_contraseña_eap"},
+};
+const int NUM_NETWORKS = sizeof(networks) / sizeof(networks[0]);
 
 const char* WS_HOST = "dasaimochiservidor-production.up.railway.app";
 const int   WS_PORT = 443;
@@ -210,20 +249,34 @@ void setup() {
   drawStatusScreen();
 
   // WiFi
-  Serial.printf("Conectando a %s...\n", WIFI_SSID);
   WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-  int tries = 0;
-  while (WiFi.status() != WL_CONNECTED && tries < 40) {
-    delay(500);
-    Serial.print('.');
-    tries++;
-  }
-  Serial.println();
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.printf("WiFi OK — IP: %s\n", WiFi.localIP().toString().c_str());
-  } else {
-    Serial.println("WiFi: no se pudo conectar");
+  {
+    bool wifiOk = false;
+    for (int n = 0; n < NUM_NETWORKS && !wifiOk; n++) {
+      WiFiCredential& c = networks[n];
+      Serial.printf("Conectando a %s...\n", c.ssid);
+      WiFi.disconnect(true); delay(100);
+      if (c.enterprise) {
+#if ENABLE_ENTERPRISE
+        EAP_SET_IDENTITY(c.eap_identity, strlen(c.eap_identity));
+        EAP_SET_USERNAME(c.eap_identity, strlen(c.eap_identity));
+        EAP_SET_PASSWORD(c.eap_password, strlen(c.eap_password));
+        EAP_ENABLE();
+        WiFi.begin(c.ssid);
+#endif
+      } else {
+        WiFi.begin(c.ssid, c.password);
+      }
+      int tries = 0;
+      while (WiFi.status() != WL_CONNECTED && tries < 40) { delay(500); Serial.print('.'); tries++; }
+      Serial.println();
+      wifiOk = (WiFi.status() == WL_CONNECTED);
+    }
+    if (wifiOk) {
+      Serial.printf("WiFi OK — IP: %s\n", WiFi.localIP().toString().c_str());
+    } else {
+      Serial.println("WiFi: no se pudo conectar");
+    }
   }
   drawStatusScreen();
 

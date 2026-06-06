@@ -73,18 +73,26 @@ arduino-cli upload -p COM3 --fqbn esp32:esp32:esp32c6 03_firmware/pruebas/01_pru
 
 **¿Qué verifica?** Que el ESP32 puede conectarse a una red WiFi y obtiene una IP.
 
-Antes de compilar, abre el archivo `05_prueba_wifi/prueba_wifi.ino` y edita las credenciales:
+Antes de compilar, abre el archivo `07_prueba_wifi/prueba_wifi.ino` y edita el arreglo `networks[]` con tus credenciales:
 
 ```cpp
-const char* ssid     = "NOMBRE_DE_TU_RED";
-const char* password = "CONTRASEÑA";
+WiFiCredential networks[] = {
+  // WPA2-Personal (red doméstica)
+  {"NOMBRE_DE_TU_RED",  "CONTRASEÑA",  false, "", ""},
+  // WPA2-Enterprise (red universitaria — opcional)
+  {"RED_UNIVERSITARIA", "",            true,
+   "usuario@universidad.edu", "contraseña_eap"},
+};
 ```
+
+> Puedes agregar varias redes. El ESP32 las intentará en orden hasta conectarse.
+> Para redes WPA2-Enterprise (como las universitarias), pon `enterprise: true` con `eap_identity` y `eap_password`.
 
 Luego compila y sube:
 
 ```powershell
-arduino-cli compile --fqbn esp32:esp32:esp32c6 03_firmware/pruebas/05_prueba_wifi
-arduino-cli upload -p COM3 --fqbn esp32:esp32:esp32c6 03_firmware/pruebas/05_prueba_wifi
+arduino-cli compile --fqbn esp32:esp32:esp32c6 03_firmware/pruebas/07_prueba_wifi
+arduino-cli upload -p COM3 --fqbn esp32:esp32:esp32c6 03_firmware/pruebas/07_prueba_wifi
 ```
 
 Abre el Monitor Serie:
@@ -236,11 +244,13 @@ Antes de continuar, anota:
 
 **¿Qué verifica?** Que el ESP32-C6 puede consultar la API de OpenWeatherMap por WiFi y mostrar temperatura, humedad, viento y pronóstico de 3 días en la pantalla OLED.
 
-Antes de compilar, abre `08_prueba_clima/prueba_clima.ino` y edita las credenciales:
+Antes de compilar, abre `08_prueba_clima/prueba_clima.ino` y edita el arreglo `networks[]` y la clave de API:
 
 ```cpp
-const char* WIFI_SSID   = "NOMBRE_DE_TU_RED";
-const char* WIFI_PASS   = "CONTRASEÑA";
+WiFiCredential networks[] = {
+  {"NOMBRE_DE_TU_RED", "CONTRASEÑA",  false, "", ""},
+  // agrega más redes si lo necesitas
+};
 const char* OWM_API_KEY = "TU_CLAVE_DE_OPENWEATHERMAP";  // registro gratuito en openweathermap.org
 const char* OWM_CITY    = "Cuenca";   // cambia a tu ciudad
 const char* OWM_COUNTRY = "EC";       // código ISO del país

@@ -43,13 +43,20 @@ A diferencia de `transcripcion` (que solo transcribe texto), este sketch **inter
 
 ## Configuración obligatoria
 
-Abre `codigo_funcional_transcripcion.ino` y edita estas líneas:
+Abre `codigo_funcional_transcripcion.ino` y edita el arreglo `networks[]` y la URL del servidor:
 
 ```cpp
-const char* WIFI_SSID  = "TU_RED_WIFI";       // nombre de tu red
-const char* WIFI_PASS  = "TU_CONTRASENA";      // contraseña
+WiFiCredential networks[] = {
+  // WPA2-Personal (red doméstica)
+  {"NOMBRE_DE_TU_RED",  "TU_CONTRASEÑA",  false, "", ""},
+  // WPA2-Enterprise (red universitaria — opcional)
+  {"RED_UNIVERSITARIA", "",               true,
+   "usuario@universidad.edu", "contraseña_eap"},
+};
 const char* SERVER_URL = "https://TU_SERVIDOR/audio/pcm16";  // URL del servidor
 ```
+
+> Puedes agregar tantas redes como necesites. El ESP32 las intentará en orden hasta conectarse.
 
 ---
 
@@ -121,7 +128,7 @@ arduino-cli monitor -p COM3 --config baudrate=115200
 | Problema | Causa probable | Solución |
 |----------|---------------|----------|
 | OLED no enciende | Dirección I2C incorrecta | Verifica con `prueba_pantalla` |
-| WiFi: FALLO | Credenciales incorrectas | Edita `WIFI_SSID` / `WIFI_PASS` |
+| WiFi: FALLO | Credenciales incorrectas | Edita el arreglo `networks[]` con SSID y contraseña correctos |
 | `HTTP -1` o `-4` | Sin conexión al servidor | Verifica URL y que el servidor esté activo |
 | Sin audio (rms≈0) | Micrófono mal conectado o pin WS incorrecto | Verifica GPIO 1 para WS; corre `prueba_sonido_microfono` primero |
 | `HTTP 500` | Error en el servidor | Revisa los logs del servidor |

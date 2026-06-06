@@ -75,11 +75,24 @@ curl http://192.168.1.105:5000/estado
 
 ## Paso 4 — Configurar el sketch
 
-Abre `transcripcion.ino` y edita las tres líneas de configuración:
+Abre `transcripcion.ino` y edita el arreglo `networks[]` con tus credenciales:
 
 ```cpp
-const char* WIFI_SSID  = "TU_RED_WIFI";       // nombre de tu red
-const char* WIFI_PASS  = "TU_CONTRASENA";      // contraseña de tu red
+WiFiCredential networks[] = {
+  // WPA2-Personal (red doméstica)
+  {"NOMBRE_DE_TU_RED",  "TU_CONTRASEÑA",  false, "", ""},
+  // WPA2-Enterprise (red universitaria — opcional)
+  {"RED_UNIVERSITARIA", "",               true,
+   "usuario@universidad.edu", "contraseña_eap"},
+};
+```
+
+> Puedes agregar tantas redes como necesites. El ESP32 las intentará en orden hasta conectarse.
+> Si solo usas redes personales (WPA2-Personal), deja `enterprise` en `false` y borra la entrada Enterprise.
+
+Edita también la URL del servidor:
+
+```cpp
 const char* SERVER_URL = "http://192.168.1.105:5000/transcribir";  // IP de tu PC
 ```
 

@@ -35,9 +35,48 @@
 #include <WiFi.h>
 #include <time.h>
 
+// ── ENABLE_ENTERPRISE: true = incluye stack WPA2-Enterprise (UPS) ───────
+// ── Dejar false si solo usas redes WPA2-Personal — ahorra ~21 KB flash ──
+#define ENABLE_ENTERPRISE true
+
+#if ENABLE_ENTERPRISE
+#  if __has_include(<esp_eap_client.h>)
+#    include <esp_eap_client.h>
+#    define EAP_ENABLE()          esp_wifi_sta_enterprise_enable()
+#    define EAP_SET_IDENTITY(u,n) esp_eap_client_set_identity((const uint8_t*)(u),(n))
+#    define EAP_SET_USERNAME(u,n) esp_eap_client_set_username((const uint8_t*)(u),(n))
+#    define EAP_SET_PASSWORD(p,n) esp_eap_client_set_password((const uint8_t*)(p),(n))
+#  else
+#    include <esp_wpa2.h>
+#    define EAP_ENABLE()          esp_wifi_sta_wpa2_ent_enable()
+#    define EAP_SET_IDENTITY(u,n) esp_wifi_sta_wpa2_ent_set_identity((uint8_t*)(u),(n))
+#    define EAP_SET_USERNAME(u,n) esp_wifi_sta_wpa2_ent_set_username((uint8_t*)(u),(n))
+#    define EAP_SET_PASSWORD(p,n) esp_wifi_sta_wpa2_ent_set_password((uint8_t*)(p),(n))
+#  endif
+#else
+#  define EAP_ENABLE()
+#  define EAP_SET_IDENTITY(u,n)
+#  define EAP_SET_USERNAME(u,n)
+#  define EAP_SET_PASSWORD(p,n)
+#endif
+
 // ── Credenciales — EDITAR ─────────────────────────────────────────────────
-const char* WIFI_SSID = "TU_RED_WIFI";
-const char* WIFI_PASS = "TU_CONTRASEÑA";
+struct WiFiCredential {
+  const char* ssid;
+  const char* password;
+  bool        enterprise;    // true = WPA2-Enterprise (EAP-TTLS)
+  const char* eap_identity;  // solo si enterprise = true
+  const char* eap_password;  // solo si enterprise = true
+};
+
+WiFiCredential networks[] = {
+  // WPA2-Personal (redes domésticas — mayor prioridad primero)
+  {"TU_RED_WIFI",      "TU_CONTRASEÑA",          false, "", ""},
+  // WPA2-Enterprise (red universitaria)
+  {"TU_RED_ENTERPRISE", "",                  true,
+   "tu_usuario@universidad.edu", "tu_contraseña_eap"},
+};
+const int NUM_NETWORKS = sizeof(networks) / sizeof(networks[0]);
 
 // ── NTP (mismos valores que mochi_unified_5) ──────────────────────────────
 const char* NTP_SERVER       = "pool.ntp.org";
@@ -139,7 +178,7 @@ void mostrarRedes(int n) {
 }
 
 // ── Pantalla: conectando con animación de puntos ───────────────────────────
-void mostrarConectando(int intento, int maxIntentos) {
+void mostrarConectando(const char* ssid, int intento, int maxIntentos) {
   display.clearDisplay();
   display.setTextColor(SH110X_WHITE);
   cabecera("CONECTANDO...");
@@ -147,7 +186,7 @@ void mostrarConectando(int intento, int maxIntentos) {
   display.setTextSize(1);
   display.setCursor(0, 14);
   display.print("Red: ");
-  display.print(WIFI_SSID);
+  display.print(ssid);
 
   // Barra de progreso con puntos
   int puntosFull = intento * 10 / maxIntentos;
@@ -230,24 +269,54 @@ void mostrarError(const char* msg) {
 //  WiFi + NTP
 // ═══════════════════════════════════════════════════════════════════════════
 
-bool conectarWiFi() {
-  Serial.printf("Conectando a %s...\n", WIFI_SSID);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-
+bool connectWPA2Personal(const WiFiCredential& c) {
+  Serial.printf("Conectando a %s...\n", c.ssid);
+  WiFi.disconnect(true); delay(100);
+  WiFi.begin(c.ssid, c.password);
   const int MAX = 20;
   for (int i = 1; i <= MAX; i++) {
-    mostrarConectando(i, MAX);
-    if (WiFi.status() == WL_CONNECTED) {
-      Serial.printf("Conectado. IP: %s  RSSI: %d dBm\n",
-        WiFi.localIP().toString().c_str(), WiFi.RSSI());
+    mostrarConectando(c.ssid, i, MAX);
+    if (WiFi.status() == WL_CONNECTED) return true;
+    delay(500);
+  }
+  return false;
+}
+
+bool connectWPA2Enterprise(const WiFiCredential& c) {
+#if ENABLE_ENTERPRISE
+  Serial.printf("Conectando a %s (Enterprise)...\n", c.ssid);
+  WiFi.disconnect(true); delay(100);
+  EAP_SET_IDENTITY(c.eap_identity, strlen(c.eap_identity));
+  EAP_SET_USERNAME(c.eap_identity, strlen(c.eap_identity));
+  EAP_SET_PASSWORD(c.eap_password, strlen(c.eap_password));
+  EAP_ENABLE();
+  WiFi.begin(c.ssid);
+  const int MAX = 30;
+  for (int i = 1; i <= MAX; i++) {
+    mostrarConectando(c.ssid, i, MAX);
+    if (WiFi.status() == WL_CONNECTED) return true;
+    delay(500);
+  }
+  return false;
+#else
+  return false;
+#endif
+}
+
+bool conectarWiFi() {
+  WiFi.mode(WIFI_STA);
+  for (int n = 0; n < NUM_NETWORKS; n++) {
+    WiFiCredential& c = networks[n];
+    bool ok = c.enterprise ? connectWPA2Enterprise(c) : connectWPA2Personal(c);
+    if (ok) {
+      Serial.printf("Conectado a %s. IP: %s  RSSI: %d dBm\n",
+        c.ssid, WiFi.localIP().toString().c_str(), WiFi.RSSI());
       beepConectado();
       return true;
     }
-    delay(500);
+    Serial.printf("Timeout en red %d/%d.\n", n+1, NUM_NETWORKS);
   }
-
-  Serial.println("ERROR: timeout de conexión WiFi.");
+  Serial.println("ERROR: no se pudo conectar a ninguna red.");
   beepError();
   return false;
 }
@@ -375,7 +444,9 @@ void setup() {
   Serial.println("========================================");
   Serial.println("  PRUEBA WIFI + NTP");
   Serial.println("========================================");
-  Serial.printf("  Red:    %s\n", WIFI_SSID);
+  Serial.printf("  Redes configuradas: %d\n", NUM_NETWORKS);
+  for (int i = 0; i < NUM_NETWORKS; i++)
+    Serial.printf("    [%d] %s%s\n", i+1, networks[i].ssid, networks[i].enterprise ? " (Enterprise)" : "");
   Serial.printf("  NTP:    %s  UTC-5\n", NTP_SERVER);
   Serial.println("========================================");
   Serial.println();

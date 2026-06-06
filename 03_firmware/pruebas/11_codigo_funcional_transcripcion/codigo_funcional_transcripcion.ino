@@ -21,7 +21,7 @@
     I2S:  SCK=4  WS=1  SD=3
 
   CONFIGURACIÓN OBLIGATORIA (editar antes de subir):
-    WIFI_SSID  / WIFI_PASS  → nombre y contraseña de tu red WiFi
+    networks[] → lista de credenciales WiFi (WPA2-Personal y/o Enterprise)
     SERVER_URL              → URL del servidor que procesa el audio
 */
 
@@ -33,6 +33,31 @@
 #include <HTTPClient.h>
 #include <driver/i2s.h>
 #include <math.h>
+
+// ── ENABLE_ENTERPRISE: true = incluye stack WPA2-Enterprise (UPS) ───────
+// ── Dejar false si solo usas redes WPA2-Personal — ahorra ~21 KB flash ──
+#define ENABLE_ENTERPRISE true
+
+#if ENABLE_ENTERPRISE
+#  if __has_include(<esp_eap_client.h>)
+#    include <esp_eap_client.h>
+#    define EAP_ENABLE()          esp_wifi_sta_enterprise_enable()
+#    define EAP_SET_IDENTITY(u,n) esp_eap_client_set_identity((const uint8_t*)(u),(n))
+#    define EAP_SET_USERNAME(u,n) esp_eap_client_set_username((const uint8_t*)(u),(n))
+#    define EAP_SET_PASSWORD(p,n) esp_eap_client_set_password((const uint8_t*)(p),(n))
+#  else
+#    include <esp_wpa2.h>
+#    define EAP_ENABLE()          esp_wifi_sta_wpa2_ent_enable()
+#    define EAP_SET_IDENTITY(u,n) esp_wifi_sta_wpa2_ent_set_identity((uint8_t*)(u),(n))
+#    define EAP_SET_USERNAME(u,n) esp_wifi_sta_wpa2_ent_set_username((uint8_t*)(u),(n))
+#    define EAP_SET_PASSWORD(p,n) esp_wifi_sta_wpa2_ent_set_password((uint8_t*)(p),(n))
+#  endif
+#else
+#  define EAP_ENABLE()
+#  define EAP_SET_IDENTITY(u,n)
+#  define EAP_SET_USERNAME(u,n)
+#  define EAP_SET_PASSWORD(p,n)
+#endif
 
 #define SSD1306_WHITE SH110X_WHITE
 #define SSD1306_BLACK SH110X_BLACK
@@ -52,9 +77,24 @@
 Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 // ── Red / Servidor ─────────────────────────────────────────────────────
-// EDITAR ESTAS TRES LÍNEAS ANTES DE SUBIR
-const char* WIFI_SSID  = "TU_RED_WIFI";
-const char* WIFI_PASS  = "TU_CONTRASENA";
+// EDITAR ANTES DE SUBIR
+struct WiFiCredential {
+  const char* ssid;
+  const char* password;
+  bool        enterprise;    // true = WPA2-Enterprise (EAP-TTLS)
+  const char* eap_identity;  // solo si enterprise = true
+  const char* eap_password;  // solo si enterprise = true
+};
+
+WiFiCredential networks[] = {
+  // WPA2-Personal (redes domésticas — mayor prioridad primero)
+  {"TU_RED_WIFI",      "TU_CONTRASEÑA",          false, "", ""},
+  // WPA2-Enterprise (red universitaria)
+  {"TU_RED_ENTERPRISE", "",                  true,
+   "tu_usuario@universidad.edu", "tu_contraseña_eap"},
+};
+const int NUM_NETWORKS = sizeof(networks) / sizeof(networks[0]);
+
 const char* SERVER_URL = "https://dasaimochiservidor-production.up.railway.app/audio/pcm16";
 const char* DEVICE_ID  = "esp32_01";
 
@@ -472,13 +512,32 @@ void setup(){
   renderText("MOCHI HTTP TEST", "Iniciando...");
   delay(800);
 
-  renderText("WiFi...", WIFI_SSID);
-  WiFi.mode(WIFI_STA); WiFi.begin(WIFI_SSID, WIFI_PASS);
-  int t=0;
-  while(WiFi.status()!=WL_CONNECTED && t<20){ delay(500); t++; }
-  if(WiFi.status()!=WL_CONNECTED){
-    renderText("WiFi: FALLO", "Reinicia el ESP32");
-    Serial.println("WiFi: FALLO"); for(;;) delay(1000);
+  WiFi.mode(WIFI_STA);
+  {
+    bool wifiOk = false;
+    for (int n = 0; n < NUM_NETWORKS && !wifiOk; n++) {
+      WiFiCredential& c = networks[n];
+      renderText("WiFi...", c.ssid);
+      WiFi.disconnect(true); delay(100);
+      if (c.enterprise) {
+#if ENABLE_ENTERPRISE
+        EAP_SET_IDENTITY(c.eap_identity, strlen(c.eap_identity));
+        EAP_SET_USERNAME(c.eap_identity, strlen(c.eap_identity));
+        EAP_SET_PASSWORD(c.eap_password, strlen(c.eap_password));
+        EAP_ENABLE();
+        WiFi.begin(c.ssid);
+#endif
+      } else {
+        WiFi.begin(c.ssid, c.password);
+      }
+      int t = 0;
+      while (WiFi.status() != WL_CONNECTED && t < 20) { delay(500); t++; }
+      wifiOk = (WiFi.status() == WL_CONNECTED);
+    }
+    if (!wifiOk) {
+      renderText("WiFi: FALLO", "Reinicia el ESP32");
+      Serial.println("WiFi: FALLO"); for(;;) delay(1000);
+    }
   }
   String ip = WiFi.localIP().toString();
   Serial.printf("WiFi OK: %s\n", ip.c_str());
