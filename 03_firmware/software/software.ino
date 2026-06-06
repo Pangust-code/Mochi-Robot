@@ -640,11 +640,11 @@ void runMenuMode() {
 void drawEyelidMask(float x,float y,float w,float h,int mood,bool isLeft){
   int ix=(int)x,iy=(int)y,iw=(int)w,ih=(int)h;
   if(mood==MOOD_ANGRY){
-    if(isLeft) for(int i=0;i<16;i++) display.drawLine(ix,iy+i,  ix+iw,iy-6+i,SSD1306_BLACK);
-    else       for(int i=0;i<16;i++) display.drawLine(ix,iy-6+i,ix+iw,iy+i,  SSD1306_BLACK);
-  } else if(mood==MOOD_SAD){
     if(isLeft) for(int i=0;i<16;i++) display.drawLine(ix,iy-6+i,ix+iw,iy+i,  SSD1306_BLACK);
     else       for(int i=0;i<16;i++) display.drawLine(ix,iy+i,  ix+iw,iy-6+i,SSD1306_BLACK);
+  } else if(mood==MOOD_SAD){
+    if(isLeft) for(int i=0;i<16;i++) display.drawLine(ix,iy+i,  ix+iw,iy-6+i,SSD1306_BLACK);
+    else       for(int i=0;i<16;i++) display.drawLine(ix,iy-6+i,ix+iw,iy+i,  SSD1306_BLACK);
   } else if(mood==MOOD_HAPPY||mood==MOOD_LOVE||mood==MOOD_EXCITED){
     display.fillRect(ix,iy+ih-12,iw,14,SSD1306_BLACK);
     display.fillCircle(ix+iw/2,iy+ih+6,(int)(iw/1.3f),SSD1306_BLACK);
