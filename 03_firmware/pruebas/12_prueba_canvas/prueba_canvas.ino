@@ -36,8 +36,8 @@
 // ── CONFIGURACIÓN PERSONAL ──────────────────────────────────────────────────
 #define DEVICE_ID  "especito"          // ← nombre único de este dispositivo
 
-const char* WIFI_SSID = "Pixel_4531";
-const char* WIFI_PASS = "tigrillo";
+const char* WIFI_SSID = "TU_RED_WIFI";
+const char* WIFI_PASS = "TU_CONTRASEÑA";
 
 const char* WS_HOST = "dasaimochiservidor-production.up.railway.app";
 const int   WS_PORT = 443;

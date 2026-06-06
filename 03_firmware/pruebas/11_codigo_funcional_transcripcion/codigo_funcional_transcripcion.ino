@@ -55,7 +55,7 @@ Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 // EDITAR ESTAS TRES LÍNEAS ANTES DE SUBIR
 const char* WIFI_SSID  = "TU_RED_WIFI";
 const char* WIFI_PASS  = "TU_CONTRASENA";
-const char* SERVER_URL = "https://TU_SERVIDOR/audio/pcm16";
+const char* SERVER_URL = "https://dasaimochiservidor-production.up.railway.app/audio/pcm16";
 const char* DEVICE_ID  = "esp32_01";
 
 // ── Moods ────────────────────────────────────────────────────────────────

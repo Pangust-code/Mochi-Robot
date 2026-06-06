@@ -18,6 +18,7 @@ En ingeniería embebida no ensamblamos todo para luego rezar que encienda. Proba
 | 05 | `05_prueba_wifi` | WiFi integrado | 802.11 | IP asignada en Monitor Serie |
 | 07 | `07_prueba_conexion_microfono` | Micrófono INMP441 | I2S | Pines detectados, sin error |
 | 08 | `08_prueba_sonido_microfono` | Micrófono INMP441 | I2S | Barra de volumen reactiva |
+| 08 | `08_prueba_clima` | WiFi + API OpenWeatherMap | HTTP/JSON | Temperatura, humedad y pronóstico 3 días en pantalla |
 
 > Las pruebas 04 y 06 son opcionales en el taller. El orden 01 → 02 → 03 → 05 → 07 → 08 es el recomendado.
 
@@ -228,6 +229,44 @@ Antes de continuar, anota:
 - [ ] Umbral elegido para "sonido fuerte": ______
 
 > Guarda estos valores. En la Fase 5 los ingresarás en la sección de configuración de `mochi_unified_5.ino`.
+
+---
+
+## Prueba 08 — Estación meteorológica (clima)
+
+**¿Qué verifica?** Que el ESP32-C6 puede consultar la API de OpenWeatherMap por WiFi y mostrar temperatura, humedad, viento y pronóstico de 3 días en la pantalla OLED.
+
+Antes de compilar, abre `08_prueba_clima/prueba_clima.ino` y edita las credenciales:
+
+```cpp
+const char* WIFI_SSID   = "NOMBRE_DE_TU_RED";
+const char* WIFI_PASS   = "CONTRASEÑA";
+const char* OWM_API_KEY = "TU_CLAVE_DE_OPENWEATHERMAP";  // registro gratuito en openweathermap.org
+const char* OWM_CITY    = "Cuenca";   // cambia a tu ciudad
+const char* OWM_COUNTRY = "EC";       // código ISO del país
+```
+
+```powershell
+arduino-cli compile --fqbn esp32:esp32:esp32c6 03_firmware/pruebas/08_prueba_clima
+arduino-cli upload -p COM3 --fqbn esp32:esp32:esp32c6 03_firmware/pruebas/08_prueba_clima
+```
+
+**Interacción:**
+
+| Acción | Resultado |
+|--------|-----------|
+| Toque corto | Cicla entre las 3 vistas (condición actual → pronóstico del día → pronóstico 3 días) |
+| Toque largo (>800 ms) | Fuerza actualización inmediata de la API |
+| Automático | Se actualiza cada 10 minutos |
+
+**Verificación:**
+
+| Lo que ves | Diagnóstico |
+|-----------|-------------|
+| Temperatura y ciudad en pantalla | Todo bien |
+| `HTTP 401` en Monitor Serie | Clave de API inválida o muy nueva (espera 10 min tras registrarte) |
+| `HTTP 404` | Ciudad o código de país incorrecto |
+| `Sin WiFi` en pantalla | Verifica SSID, contraseña y que la red sea 2.4 GHz |
 
 ---
 

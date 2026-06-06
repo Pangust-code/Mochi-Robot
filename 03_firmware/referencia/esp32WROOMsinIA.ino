@@ -33,8 +33,8 @@ BluetoothSerial SerialBT;
 #define I2S_PORT I2S_NUM_0
 
 // ── Credenciales Wi-Fi y Configuración NTP (Ecuador) ──────────
-const char* ssid       = "MARCO_1";
-const char* password   = "dante0507";
+const char* ssid       = "TU_RED_WIFI";
+const char* password   = "TU_CONTRASEÑA";
 const char* ntpServer  = "pool.ntp.org";
 const long  gmtOffset_sec = -18000; // UTC-5 (Ecuador) en segundos
 const int   daylightOffset_sec = 0; // Sin horario de verano
