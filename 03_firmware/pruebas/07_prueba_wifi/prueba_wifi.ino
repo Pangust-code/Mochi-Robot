@@ -36,8 +36,8 @@
 #include <time.h>
 
 // ── Credenciales — EDITAR ─────────────────────────────────────────────────
-const char* WIFI_SSID = "Pixel_4531";
-const char* WIFI_PASS = "tigrillo";
+const char* WIFI_SSID = "TU_RED_WIFI";
+const char* WIFI_PASS = "TU_CONTRASEÑA";
 
 // ── NTP (mismos valores que mochi_unified_5) ──────────────────────────────
 const char* NTP_SERVER       = "pool.ntp.org";
