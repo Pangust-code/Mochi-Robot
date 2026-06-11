@@ -1,0 +1,5 @@
+# Dependencias del servidor de transcripción Mochi
+# Instalar con: pip install -r requirements.txt
+
+flask>=3.0
+openai-whisper

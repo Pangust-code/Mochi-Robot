@@ -1,0 +1,7 @@
+gif_name=nheo_mat
+frame_count=105  # Tru di cac file khac (info.txt, sound.wav)
+width=128
+height=64
+delay_ms=100
+format=ssd1306_page_based
+bytes_per_frame=1024
