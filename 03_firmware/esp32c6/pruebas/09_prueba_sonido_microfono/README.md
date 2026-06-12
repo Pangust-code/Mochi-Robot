@@ -16,7 +16,7 @@ El INMP441 es un dispositivo digital que se comunica mediante el bus I2S. [cite_
 | **GND** | GND | Tierra | Referencia común de potencial. |
 | **L/R** | GND | Selección de Canal | [cite_start]Al conectarlo a Tierra, el micrófono transmite datos por el canal izquierdo (Left). |
 | **SCK** | **GPIO 4** | Reloj de Bits (BCLK) | [cite_start]Sincronización serial de los bits de datos[cite: 294, 295]. |
-| **WS** | **GPIO 5** | Word Select (LRCK) | [cite_start]Selección de canal para la trama (izquierdo o derecho)[cite: 294, 295]. |
+| **WS** | **GPIO 1** | Word Select (LRCK) | [cite_start]Selección de canal para la trama (izquierdo o derecho)[cite: 294, 295]. |
 | **SD** | **GPIO 3** | Serial Data | [cite_start]Salida digital del flujo de audio PCM[cite: 294, 295]. |
 
 > [cite_start]⚠️ **Importante:** El pin **L/R** debe estar forzosamente puenteado a **GND**. Si se deja flotando, el canal de datos no estará definido correctamente.

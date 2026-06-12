@@ -27,7 +27,7 @@
 
 // ── Pines (deben coincidir con el firmware principal) ──────────────────────
 #define PIN_SCK  4
-#define PIN_WS   5
+#define PIN_WS   1
 #define PIN_SD   3
 #define I2S_PORT I2S_NUM_0
 

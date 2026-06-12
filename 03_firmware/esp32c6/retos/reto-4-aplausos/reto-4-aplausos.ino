@@ -28,7 +28,7 @@
 #define BUZZER_PIN   19
 #define TOUCH_PIN     2
 #define I2S_SCK       4
-#define I2S_WS        5
+#define I2S_WS        1
 #define I2S_SD        3
 #define I2S_PORT  I2S_NUM_0
 

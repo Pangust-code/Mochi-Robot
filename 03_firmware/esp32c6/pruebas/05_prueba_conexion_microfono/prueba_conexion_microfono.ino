@@ -23,7 +23,7 @@
 
 #define PIN_SD   3   // INMP441 — datos de audio
 #define PIN_SCK  4   // INMP441 — reloj de bits (BCK)
-#define PIN_WS   5   // INMP441 — selección de canal (LRCK)
+#define PIN_WS   1   // INMP441 — selección de canal (LRCK)
 
 bool prevSD  = HIGH;
 bool prevSCK = HIGH;

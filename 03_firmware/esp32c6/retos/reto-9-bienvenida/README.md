@@ -10,7 +10,7 @@ Fácil.
 
 ## Qué vas a tocar
 
-- `03_firmware/mochi_unified_5/mochi_unified_5.ino`
+- `03_firmware/software/software.ino`
 - La función `setup()`
 - Una función nueva para dibujar la animación de arranque
 

@@ -14,7 +14,7 @@ A diferencia de las pruebas de software, este script es una prueba de **continui
 | :--- | :--- | :--- |
 | **SD** | **GPIO 3** | [cite_start]Serial Data (Línea de datos de audio)[cite: 276, 280]. |
 | **SCK** | **GPIO 4** | [cite_start]Serial Clock (Reloj de bits o BCK)[cite: 276, 280]. |
-| **WS** | **GPIO 5** | [cite_start]Word Select (Selección de canal izquierdo/derecho o LRCK)[cite: 276, 280]. |
+| **WS** | **GPIO 1** | [cite_start]Word Select (Selección de canal izquierdo/derecho o LRCK)[cite: 276, 280]. |
 
 > [cite_start]⚠️ **IMPORTANTE:** Para ejecutar esta prueba, el micrófono INMP441 **NO DEBE** estar conectado a la placa[cite: 276].
 
