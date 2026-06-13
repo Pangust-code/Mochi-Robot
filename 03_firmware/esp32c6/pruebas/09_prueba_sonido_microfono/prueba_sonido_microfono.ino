@@ -6,7 +6,7 @@
   Muestra amplitud en tiempo real con una barra ASCII y clasificación de nivel.
 
   CÓMO USAR:
-  1. Conecta el INMP441:  SCK=GPIO4  WS=GPIO5  SD=GPIO3  L/R→GND
+  1. Conecta el INMP441:  SCK=GPIO4  WS=GPIO1  SD=GPIO3  L/R→GND
   2. Abre el Monitor Serial a 115200 baud
   3. Observa los valores en reposo (silencio ambiental)
   4. Habla, aplaude o sopla cerca del micrófono
@@ -104,7 +104,7 @@ void setup() {
   Serial.println("========================================");
   Serial.println("  PRUEBA DE SONIDO — INMP441");
   Serial.println("========================================");
-  Serial.println("  SCK=GPIO4  WS=GPIO5  SD=GPIO3");
+  Serial.println("  SCK=GPIO4  WS=GPIO1  SD=GPIO3");
   Serial.println("  L/R → GND");
   Serial.println("========================================");
   Serial.println("  Iniciando I2S...");
