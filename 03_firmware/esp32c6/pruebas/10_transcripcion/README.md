@@ -177,3 +177,30 @@ MODELO = "base"   # tiny | base | small | medium | large
 | `no hay memoria` | Buffer muy grande | Reduce `RECORD_SECS` a 2 |
 | Grabación en blanco | Micrófono mal conectado | Corre `prueba_sonido_microfono` primero |
 | `Error al parsear JSON` | El servidor no devolvió JSON válido | Verifica la respuesta del servidor en el monitor serial |
+
+---
+
+## ¿Qué aprendiste?
+
+Este sketch demuestra un pipeline IoT completo:
+
+```
+Sensor físico (INMP441)
+  → Microcontrolador graba audio en RAM
+  → Empaqueta como WAV y envía por HTTP POST
+  → Servidor Python recibe y transcribe con Whisper
+  → Devuelve JSON con el texto
+  → ESP32 muestra la transcripción
+```
+
+Cada eslabón de esa cadena es reutilizable. El servidor podría ser cualquier API. El audio podría ser cualquier input. El resultado podría mostrarse en cualquier pantalla.
+
+---
+
+## Reto propuesto
+
+Ahora que entiendes cómo funciona la cadena HTTP → servidor → JSON → pantalla, el siguiente paso natural es: **¿qué pasa si el servidor no eres tú?**
+
+**[Reto 10 — Tu propia API](../retos/reto-10-nueva-api/)** te desafía a conectar el ESP32 a una API pública de tu elección y mostrar sus datos en la OLED. No necesitas grabar audio — solo WiFi, una petición HTTP GET, y parsear el JSON que regresa.
+
+Es el mismo patrón que acabas de aprender, sin el servidor intermedio.

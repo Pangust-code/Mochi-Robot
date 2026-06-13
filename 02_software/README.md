@@ -1,12 +1,6 @@
 # Sección 2 — Preparación del entorno
 
-> **Antes de empezar:** Asegúrate de tener el repositorio clonado.
-> ```bash
-> git clone https://github.com/Pangust-code/Mochi-Robot.git
-> cd Mochi-Robot
-> ```
-
-Esta carpeta contiene el tutorial completo de Arduino CLI y las tareas de VS Code preconfiguradas. Sigue los pasos en orden.
+Instala y configura Arduino IDE para poder compilar y cargar el firmware de Mochi en el ESP32.
 
 ---
 
@@ -14,194 +8,146 @@ Esta carpeta contiene el tutorial completo de Arduino CLI y las tareas de VS Cod
 
 | Herramienta | Para qué sirve |
 |-------------|----------------|
-| **Arduino CLI** | Compilar y subir código desde la terminal (sin IDE de Arduino) |
-| **Core ESP32** | Enseña a Arduino CLI a compilar para el ESP32-C6 |
+| **Arduino IDE** | Entorno de programación principal |
+| **Driver CP210X** | Permite que el PC reconozca el ESP32 al conectarlo por USB |
+| **Core ESP32** | Enseña a Arduino IDE a compilar para el ESP32-C3 y ESP32-C6 |
 | **Adafruit GFX Library** | Motor gráfico para la pantalla OLED |
-| **Adafruit SH110X** | Driver del controlador SH1106 |
-| **U8g2** | Renderiza los GIFs en el Modo 1 |
-| **LittleFS** | Sistema de archivos en flash del ESP32 (imágenes, datos) |
-| **Driver USB** | Para que el PC reconozca el ESP32 al conectarlo |
+| **Adafruit SH110X** | Driver del controlador SH1106 de la pantalla |
+| **U8g2** | Renderiza los GIFs animados en el Modo 1 |
 
 ---
 
-## Paso 1 — Instalar Arduino CLI
+## Paso 1 — Descargar e instalar Arduino IDE
 
-**Windows:**
-```powershell
-winget install --id ArduinoSA.CLI -e --source winget
-```
-Cierra y vuelve a abrir la terminal.
+Descarga la versión más reciente desde la página oficial:
 
-**Mac:**
-```bash
-brew install arduino-cli
-```
+**[https://www.arduino.cc/en/software/](https://www.arduino.cc/en/software/)**
 
-**Linux:**
-```bash
-curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
-sudo mv bin/arduino-cli /usr/local/bin/
-```
+![Descarga de Arduino IDE](descargar_arduino.png)
 
-**Verificar:**
-```powershell
-arduino-cli version
-# → arduino-cli  Version: 0.35.x  ...
-```
-
-> Si en Windows el comando no se reconoce: `& "C:\Program Files\Arduino CLI\arduino-cli.exe" version`
+Descarga el instalador para Windows, ejecútalo y sigue los pasos por defecto. Al terminar abre Arduino IDE para verificar que inicia correctamente.
 
 ---
 
-## Paso 2 — Instalar el core de ESP32
+## Paso 2 — Instalar el driver USB (CP210X)
 
-```powershell
-arduino-cli core update-index
-arduino-cli core install esp32:esp32
-```
+El ESP32-C3 y el ESP32-C6 usan el chip CP2102 para comunicarse con la computadora por USB. Si al conectar el ESP32 no aparece ningún puerto COM, necesitas instalar este driver.
 
-Descarga varios cientos de MB — solo se hace una vez.
+**CP210X Universal Windows Driver — Silicon Labs**
 
-**Verificar que el ESP32-C6 está disponible:**
-```powershell
-arduino-cli board listall | grep esp32c6
-# → esp32:esp32:esp32c6   ESP32-C6 Dev Module
-```
+![Descarga del driver CP210X](descargar_cp210x_driver.png)
+
+Descarga el driver, descomprímelo y ejecuta el instalador. Desconecta y vuelve a conectar el ESP32 después de instalarlo — el puerto COM debería aparecer en el Administrador de dispositivos.
 
 ---
 
-## Paso 3 — Instalar las librerías
+## Paso 3 — Instalar el core de ESP32
 
-```powershell
-arduino-cli lib install "Adafruit GFX Library"
-arduino-cli lib install "Adafruit SH110X"
-arduino-cli lib install "U8g2"
-```
+El "core" le enseña a Arduino IDE cómo compilar y subir código a los microcontroladores ESP32.
 
-**Verificar:**
-```powershell
-arduino-cli lib list
-# Deben aparecer las tres librerías
-```
+1. Abre Arduino IDE
+2. Ve a **File → Preferences** (o `Ctrl+,`)
+3. En el campo **Additional boards manager URLs** pega esta URL:
+   ```
+   https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+   ```
+4. Haz clic en **OK**
+5. Ve a **Tools → Board → Boards Manager**
+6. Busca `esp32` e instala **esp32 by Espressif Systems**
 
----
+La descarga puede tardar varios minutos — solo se hace una vez.
 
-## Paso 4 — Instalar LittleFS
-
-El firmware de Mochi almacena archivos en la flash del ESP32 usando LittleFS. Necesitas la herramienta de subida de datos.
-
-### 4.1 — Plugin para Arduino IDE (si usas IDE)
-
-Sigue el tutorial en video:
-**👉 [Instalar LittleFS en Arduino IDE — YouTube](https://www.youtube.com/watch?v=vICDKOLizrU)**
-
-Pasos resumidos:
-1. Descarga el archivo `.zip` del plugin desde el enlace del video.
-2. Descomprime en la carpeta `tools/` dentro de tu sketchbook de Arduino.
-   - Windows: `Documents\Arduino\tools\`
-   - Mac/Linux: `~/Arduino/tools/`
-3. Reinicia el Arduino IDE.
-4. Verifica que aparece **Tools → ESP32 LittleFS Data Upload**.
-
-### 4.2 — Arduino CLI / VS Code (línea de comandos)
-
-Con Arduino CLI no hay plugin visual; la subida del filesystem se hace con `esptool.py` y `mklittlefs`, ambos incluidos en el core de ESP32.
-
-El repositorio ya tiene una tarea de VS Code preconfigurada para esto (ver sección de tareas más abajo).
+![Instalación del core ESP32 en Boards Manager](librería_esp32.png)
 
 ---
 
-## Paso 5 — Configuración del board (ESP32-C6)
+## Paso 4 — Instalar las librerías
 
-Antes de compilar o subir, el board debe configurarse con estas opciones. Son críticas para que el firmware funcione correctamente.
+Las librerías se instalan desde **Tools → Manage Libraries** (o `Ctrl+Shift+I`). Busca cada una por nombre e instálala.
 
-| Parámetro | Valor requerido |
-|-----------|----------------|
+### Adafruit GFX Library
+
+Motor gráfico base. Busca `Adafruit GFX` e instala **Adafruit GFX Library** de Adafruit.
+
+![Instalación de Adafruit GFX](libreria_adafruit.png)
+
+### Adafruit SH110X
+
+Driver de la pantalla OLED SH1106. Busca `SH110X` e instala **Adafruit SH110X** de Adafruit.
+
+> Al instalar SH110X, Arduino IDE puede preguntarte si deseas instalar también sus dependencias — selecciona **Install All**.
+
+![Instalación de Adafruit SH110X](libreria_sh110x.png)
+
+### U8g2
+
+Renderiza los GIFs animados. Busca `U8g2` e instala **U8g2** de oliver.
+
+![Instalación de U8g2](libreria_u8g2.png)
+
+---
+
+## Paso 5 — Configurar el board
+
+Antes de compilar o subir, selecciona el microcontrolador correcto y ajusta estos parámetros en el menú **Tools**:
+
+### ESP32-C6 Supermini
+
+| Parámetro | Valor |
+|-----------|-------|
+| **Board** | `ESP32-C6 Dev Module` |
 | **USB CDC On Boot** | `Enabled` |
 | **Partition Scheme** | `Huge APP (3MB No OTA / 1MB SPIFFS)` |
 | **Upload Speed** | `115200` |
+| **Port** | El puerto COM que aparece al conectar el ESP32 |
 
-### En Arduino CLI (FQBN completo)
+### ESP32-C3 Super Mini
 
-Usa siempre este FQBN al compilar y subir:
+| Parámetro | Valor |
+|-----------|-------|
+| **Board** | `ESP32-C3 Dev Module` |
+| **USB CDC On Boot** | `Enabled` |
+| **Partition Scheme** | `Huge APP (3MB No OTA / 1MB SPIFFS)` |
+| **Upload Speed** | `115200` |
+| **Port** | El puerto COM que aparece al conectar el ESP32 |
 
-```powershell
-arduino-cli compile --fqbn "esp32:esp32:esp32c6:CDCOnBoot=cdc,PartitionScheme=huge_app" .
-arduino-cli upload  --fqbn "esp32:esp32:esp32c6:CDCOnBoot=cdc,PartitionScheme=huge_app" --port COM3 .
-```
+![Configuración del board en Arduino IDE](config_board_arduino.png)
 
-> Reemplaza `COM3` con el puerto real de tu ESP32 (ver Paso 6).
+> **¿Por qué Partition Scheme = Huge APP?**
+> El firmware completo de Mochi ocupa más espacio que la partición estándar. Sin esta configuración el IDE mostrará el error `Image length doesn't fit in partition`.
 
-Las tareas de VS Code ya incluyen este FQBN — no necesitas escribirlo a mano.
-
-### En Arduino IDE
-
-1. **Tools → Board → ESP32 Arduino → ESP32-C6 Dev Module**
-2. **Tools → USB CDC On Boot → Enabled**
-3. **Tools → Partition Scheme → Huge APP (3MB No OTA / 1MB SPIFFS)**
-4. **Tools → Upload Speed → 115200**
-
-> **¿Por qué USB CDC On Boot: Enabled?**
-> Activa el puerto serie nativo del ESP32-C6 por USB. Sin esto, el monitor serial y los logs de arranque no se muestran correctamente.
+> **¿Por qué USB CDC On Boot = Enabled?**
+> Activa el puerto serie nativo del ESP32 por USB. Sin esto el Monitor Serial no muestra los mensajes de depuración.
 
 ---
 
-## Paso 6 — Instalar el driver USB
+## Paso 6 — Instalar el plugin LittleFS
 
-Si el ESP32 no aparece como puerto COM al conectarlo:
+El firmware de Mochi almacena los GIFs y datos en la memoria flash del ESP32 usando LittleFS. Para subir esos archivos necesitas un plugin adicional para Arduino IDE.
 
-- **CH340:** [wch-ic.com → CH341SER.EXE](https://www.wch-ic.com/downloads/CH341SER_EXE.html)
-- **CP2102:** [silabs.com → VCP Drivers](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers)
+Busca el plugin según la versión de tu Arduino IDE:
 
-Desconecta y vuelve a conectar el ESP32 después de instalar.
+- **Arduino IDE 2.x** — Busca el plugin `arduino-littlefs-upload` en GitHub. El video de referencia explica la instalación:
+  [Instalar LittleFS en Arduino IDE 2 — YouTube](https://www.youtube.com/watch?v=vICDKOLizrU)
 
----
-
-## Paso 7 — Verificar el puerto
-
-Conecta el ESP32 por USB y ejecuta:
-```powershell
-arduino-cli board list
-# → COM3   esp32:esp32:esp32c6   ...
-```
-
-Anota el puerto (`COM3`, `COM4`, `/dev/ttyUSB0`…). Lo usarás en la siguiente sección.
-
----
-
-## VS Code — Tareas preconfiguradas
-
-El repositorio incluye [`.vscode/tasks.json`](../.vscode/tasks.json) con estas tareas listas:
-
-| Tarea | Acción |
-|-------|--------|
-| `Arduino: Compilar ESP32-C6 (huge_app)` | `Ctrl+Shift+B` |
-| `Arduino: Subir al ESP32-C6` | Sube al puerto indicado |
-| `Arduino: Monitor Serial (115200)` | Abre el monitor a 115200 baud |
-| `Arduino: Compilar + Subir` | Ambos en secuencia |
-| `Arduino: Subir LittleFS` | Sube la carpeta `data/` al filesystem |
-
-> Ve a **Terminal → Run Task** para ejecutarlas.
+Pasos resumidos:
+1. Descarga el archivo `.vsix` del plugin
+2. En Arduino IDE 2: **File → Preferences → Additional Plugin** o instálalo arrastrando el `.vsix`
+3. Reinicia Arduino IDE
+4. Verifica que aparece **Sketch → Upload LittleFS to ESP32**
 
 ---
 
 ## ✅ Checklist — Sección 2
 
-- [ ] `arduino-cli version` muestra una versión
-- [ ] `arduino-cli board listall | grep esp32c6` devuelve resultados
-- [ ] `arduino-cli lib list` muestra GFX, SH110X y U8g2
-- [ ] Plugin LittleFS instalado (IDE) o tarea VS Code disponible
-- [ ] USB CDC On Boot configurado en `Enabled`
-- [ ] Partition Scheme configurado en `Huge APP (3MB No OTA / 1MB SPIFFS)`
-- [ ] Upload Speed configurado en `115200`
-- [ ] El ESP32 aparece como puerto COM al conectarlo por USB
-
----
-
-## Referencia adicional
-
-Para más detalle sobre cada comando y solución de errores específicos de esta sección:
-👉 [ArduinoCLI_tutorial.md](ArduinoCLI_tutorial.md)
+- [ ] Arduino IDE instalado y abre correctamente
+- [ ] Driver CP210X instalado (el ESP32 aparece como puerto COM al conectarlo)
+- [ ] Core ESP32 instalado — en **Tools → Board** aparecen `ESP32-C6 Dev Module` y `ESP32-C3 Dev Module`
+- [ ] Adafruit GFX Library instalada
+- [ ] Adafruit SH110X instalada
+- [ ] U8g2 instalada
+- [ ] Board configurado: Partition Scheme = `Huge APP` y USB CDC On Boot = `Enabled`
+- [ ] Plugin LittleFS instalado — aparece **Sketch → Upload LittleFS to ESP32**
 
 ---
 

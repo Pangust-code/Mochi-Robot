@@ -1,48 +1,105 @@
-# 🤖 Suite de Pruebas de Hardware: ESP32-C3 Super Mini + OLED SH1106 + TTP223
+# Prueba 02 — Sensor táctil TTP223
 
-[cite_start]Este repositorio contiene las herramientas de diagnóstico y validación esenciales para verificar el correcto funcionamiento físico y lógico de los componentes antes de su integración en firmwares complejos[cite: 48]. [cite_start]El objetivo de estos scripts es aislar y asegurar de forma independiente el comportamiento de la pantalla OLED SH1106 de 128×64  [cite_start]y el sensor táctil capacitivo TTP223.
-
----
-
-## 🛠️ Arquitectura de Hardware y Pinout
-
-Para que los scripts funcionen correctamente, el cableado entre el microcontrolador ESP32-C3 Super Mini y los periféricos debe realizarse siguiendo estrictamente la siguiente distribución de pines:
-
-| Componente | Pin Periférico | Pin ESP32-C3 Super Mini | Función Lógica | Descripción |
-| :--- | :--- | :--- | :--- | :--- |
-| **OLED SH1106** | VCC | 3.3V | Alimentación | [cite_start]Voltaje operativo del panel[cite: 3]. |
-| **OLED SH1106** | GND | GND | Tierra | Referencia común de potencial. |
-| **OLED SH1106** | SDA | **GPIO 8** | Bus de Datos I2C | [cite_start]Transmisión de datos bidireccional[cite: 3, 49]. |
-| **OLED SH1106** | SCL | **GPIO 9** | Bus de Reloj I2C | [cite_start]Señal de sincronización de reloj[cite: 3, 49]. |
-| **TTP223 Touch** | SIG | **GPIO 2** | Entrada Digital | [cite_start]Lectura del estado del sensor[cite: 49]. |
-
-* [cite_start]**Dirección I2C por Defecto:** `0x3C`[cite: 4, 49].
+Verifica que el sensor capacitivo detecta correctamente el contacto y distingue tap simple, doble, triple y hold.
 
 ---
 
-## 📂 Desglose de los Módulos de Diagnóstico
+## ¿Qué vas a aprender?
 
-### [cite_start]1. 📺 Diagnóstico Gráfico Integral (`prueba_pantalla.ino`) 
+El TTP223 es un sensor **capacitivo**: cuando tu dedo (un conductor) se acerca a la placa metálica del sensor, cambia la carga eléctrica almacenada en esa superficie. El chip interno detecta ese cambio y emite un `1` en su pin de salida. Es la misma tecnología que usa la pantalla de tu teléfono.
 
-[cite_start]Este módulo ejecuta un pipeline automático secuencial de 7 pruebas diseñadas para estresar el búfer gráfico de la pantalla y validar el canal de comunicación I2C[cite: 1, 2].
+La diferencia con un botón mecánico: no hay partes móviles, y funciona incluso a través de una capa delgada de material (como plástico o vidrio fino).
 
-#### Flujo de los Tests Visuales:
-* [cite_start]**Test 1 — Scanner I2C:** Realiza un barrido síncrono en todo el bus (direcciones 1 a 126) [cite: 9] [cite_start]para confirmar que el display responde en la dirección configurada. [cite_start]Si no detecta dispositivos, emite una alerta por puerto serie[cite: 13, 14].
-* [cite_start]**Test 2 — Texto Básico:** Limpia el búfer y renderiza el mensaje estático "PANTALLA OK :)" para validar el mapa de coordenadas cartesianas básico[cite: 16, 17].
-* [cite_start]**Test 3 — Tamaños de Texto:** Imprime tres líneas consecutivas variando la escala tipográfica entre los tamaños 1, 2 y 3 para verificar la legibilidad y fuentes integradas[cite: 18, 19, 20].
-* [cite_start]**Test 4 — Formas Geométricas:** Dibuja de forma vectorial rectángulos (vacíos y con relleno), círculos (vacíos y con relleno) y líneas de separación, validando la precisión geométrica del driver de pantalla[cite: 21, 22, 23, 24, 25].
-* [cite_start]**Test 5 — Todos los Píxeles ON:** Enciende simultáneamente cada píxel de la matriz de 128x64 de forma individual[cite: 27, 28]. [cite_start]Esto permite realizar una inspección a simple vista para identificar "píxeles muertos" o zonas dañadas en el panel físico[cite: 30].
-* [cite_start]**Test 6 — Inversión de Contraste:** Invoca el comando nativo `invertDisplay()` alternando entre visualización normal e invertida (texto negro sobre fondo blanco)[cite: 31, 33].
-* [cite_start]**Test 7 — Animación de Barra de Carga:** Modifica en tiempo real el ancho de un rectángulo interior basándose en incrementos forzados[cite: 34, 35]. [cite_start]Traduce el ancho del gráfico a un valor numérico porcentual mediante la función matemática `map()` para certificar la tasa de refresco fluida[cite: 36].
+El sketch implementa una máquina de estados con temporizadores no bloqueantes para distinguir cuatro gestos:
+
+| Gesto | Descripción | Constante |
+|-------|-------------|-----------|
+| TAP x1 | Toque corto soltado antes de 800 ms | — |
+| TAP x2 | Dos toques dentro de 400 ms | `MULTITAP_MS = 400` |
+| TAP x3+ | Tres o más toques rápidos | `MULTITAP_MS = 400` |
+| HOLD | Toque sostenido ≥ 800 ms | `HOLD_MS = 800` |
+
+Estos son exactamente los mismos umbrales que usa el firmware final de Mochi.
 
 ---
 
-### [cite_start]2. 👆 Intérprete de Eventos Táctiles Avanzado (`prueba_touch.ino`) 
+## Hardware
 
-[cite_start]Este script implementa un algoritmo de lectura asíncrona no bloqueante utilizando marcas de tiempo nativas (`millis()`) [cite: 51, 52, 66] [cite_start]para decodificar intenciones del usuario sobre el sensor capacitivo TTP223.
+| Pin TTP223 | GPIO ESP32-C3 Super Mini | Función |
+|-----------|--------------------------|---------|
+| VCC | 3.3V | Alimentación |
+| GND | GND | Tierra |
+| SIG / OUT | GPIO 2 | Salida digital |
 
-#### Configuración de Umbrales Temporales:
-```cpp
-#define HOLD_MS       800    // Ventana mínima para pulsación larga (HOLD) [cite: 49]
-#define MULTITAP_MS   400    // Ventana máxima para acumular taps sucesivos [cite: 49]
+También se usa la OLED (SDA → GPIO 8, SCL → GPIO 9) para mostrar el panel de estado en tiempo real.
+
+---
+
+## Dependencias
+
+```powershell
+arduino-cli lib install "Adafruit GFX Library"
+arduino-cli lib install "Adafruit SH110X"
 ```
+
+---
+
+## Compilar y subir
+
+```powershell
+arduino-cli compile --fqbn esp32:esp32:esp32c3 03_firmware/esp32c3/pruebas/02_prueba_touch
+arduino-cli upload -p COM3 --fqbn esp32:esp32:esp32c3 03_firmware/esp32c3/pruebas/02_prueba_touch
+arduino-cli monitor -p COM3 -b esp32:esp32:esp32c3 -c baudrate=115200
+```
+
+---
+
+## Resultado esperado
+
+La OLED muestra en tiempo real:
+- Último evento detectado (TAP x1, TAP x2, TAP x3, HOLD)
+- Estado crudo del pin (0 o 1) con temporizador interno en ms
+- Contador acumulativo de eventos
+
+En el Monitor Serie:
+
+```
+[TOUCH] TAP x1  detectado
+[TOUCH] TAP x2  detectado
+[TOUCH] TAP x3  detectado
+[TOUCH] HOLD    detectado  (1024 ms)
+```
+
+---
+
+## Diagnóstico
+
+| Lo que ves | Causa probable | Solución |
+|-----------|---------------|----------|
+| Siempre `1` aunque no toques | Pin OUT mal conectado o cortocircuito | Revisa la conexión OUT → GPIO 2 |
+| Siempre `0` aunque toques | VCC incorrecto | Verifica que el TTP223 recibe 3.3V |
+| No detecta doble tap | Ventana muy corta | Sube `MULTITAP_MS` a `600` |
+| HOLD dispara inmediatamente | `HOLD_MS` muy bajo | Verifica que esté en `800` |
+
+---
+
+## Mini-reto
+
+El timing es la clave de la interacción. Abre `prueba_touch.ino` y encuentra las líneas:
+
+```cpp
+#define HOLD_MS      800
+#define MULTITAP_MS  400
+```
+
+Experimenta con estos valores:
+
+1. Cambia `MULTITAP_MS` a `200`. ¿Es más difícil registrar un doble tap?
+2. Cambia `HOLD_MS` a `400`. ¿El HOLD se activa demasiado fácil?
+3. ¿Qué combinación sientes más natural para usar en un robot?
+
+No hay respuesta correcta — estas son decisiones de diseño de experiencia de usuario (UX). El firmware final usa `800` y `400` porque son los valores que encontramos más intuitivos en pruebas con usuarios.
+
+---
+
+**Siguiente prueba →** [03_prueba_buzzer/](../03_prueba_buzzer/)

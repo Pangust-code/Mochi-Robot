@@ -1,67 +1,66 @@
-# 🎙️ Módulo de Adquisición de Audio I2S: ESP32-C6 + INMP441
+# Prueba 09 — Nivel de sonido del micrófono
 
-[cite_start]Este repositorio contiene la herramienta de validación de hardware para el micrófono digital omnidireccional INMP441[cite: 292]. [cite_start]Este script de diagnóstico no solo verifica que el protocolo de comunicación I2S esté operando correctamente, sino que procesa el búfer de audio en tiempo real para extraer amplitudes, suavizar señales y clasificar el entorno acústico[cite: 292, 293].
-
-Es una prueba integral que debe ejecutarse *después* de validar la continuidad eléctrica de los cables, garantizando que el microcontrolador es capaz de "escuchar" e interpretar sonido ambiente antes de implementar lógicas reactivas complejas.
+Verifica que el micrófono INMP441 capta audio y produce lecturas de amplitud variables en tiempo real.
 
 ---
 
-## 🛠️ Arquitectura de Hardware y Pinout
+## ¿Qué vas a aprender?
 
-El INMP441 es un dispositivo digital que se comunica mediante el bus I2S. [cite_start]Las conexiones deben realizarse estrictamente de la siguiente manera[cite: 294, 295, 310]:
+El INMP441 convierte variaciones de presión del aire (sonido) en números de 16 bits. El sketch captura paquetes de 256 muestras a 16,000 Hz y calcula la **amplitud** de cada paquete: el valor máximo menos el valor mínimo dentro del grupo.
 
-| Pin INMP441 | Pin ESP32-C6 | Función Lógica (I2S) | Descripción |
-| :--- | :--- | :--- | :--- |
-| **VDD** | 3.3V | Alimentación | Voltaje operativo del micrófono. |
-| **GND** | GND | Tierra | Referencia común de potencial. |
-| **L/R** | GND | Selección de Canal | [cite_start]Al conectarlo a Tierra, el micrófono transmite datos por el canal izquierdo (Left). |
-| **SCK** | **GPIO 4** | Reloj de Bits (BCLK) | [cite_start]Sincronización serial de los bits de datos[cite: 294, 295]. |
-| **WS** | **GPIO 1** | Word Select (LRCK) | [cite_start]Selección de canal para la trama (izquierdo o derecho)[cite: 294, 295]. |
-| **SD** | **GPIO 3** | Serial Data | [cite_start]Salida digital del flujo de audio PCM[cite: 294, 295]. |
+```
+amplitud = max(muestras) - min(muestras)
+```
 
-> [cite_start]⚠️ **Importante:** El pin **L/R** debe estar forzosamente puenteado a **GND**. Si se deja flotando, el canal de datos no estará definido correctamente.
+Esto filtra automáticamente el desplazamiento de corriente continua (DC offset) y mide la energía bruta de la señal. No procesamos frecuencias — no hay FFT. Solo energía. Es suficiente para distinguir silencio, voz y aplausos.
 
----
+Para evitar que la barra visual salte erráticamente, se aplica un **filtro de suavizado exponencial**:
 
-## 🧠 Desglose Lógico e Ingeniería de Audio
+```cpp
+suavizado = (suavizado * 5 + amplitud * 3) / 8
+```
 
-Este script transforma datos crudos de hardware en información acústica útil empleando varias técnicas de procesamiento digital de señales (DSP) básicas:
-
-### 1. Configuración del Driver I2S (DMA)
-[cite_start]El microcontrolador se configura en modo Maestro-Receptor (`I2S_MODE_MASTER | I2S_MODE_RX`), controlando los relojes del bus[cite: 296, 297]. [cite_start]La captura se realiza a una frecuencia de muestreo de **16,000 Hz** con una resolución de **16 bits** en formato mono (solo canal izquierdo)[cite: 297]. [cite_start]Utiliza 4 búferes DMA de 256 muestras para evitar cuellos de botella en el procesador principal[cite: 295, 297].
-
-### 2. Cálculo de Amplitud (Pico a Pico)
-En lugar de procesar frecuencias complejas (FFT), el sistema evalúa la energía bruta de la señal. [cite_start]Captura las 256 muestras, busca el valor máximo y el valor mínimo dentro de ese paquete, y calcula la diferencia absoluta[cite: 302, 304, 305]. Este método filtra automáticamente los desplazamientos de corriente continua (DC Offset).
-
-### 3. Suavizado Exponencial de Señal
-Para evitar que el renderizado de la barra visual sea errático y difícil de leer, se aplica un filtro matemático de media móvil exponencial: 
-[cite_start]`suavizado = (suavizado * 5 + amp * 3) / 8`[cite: 318]. 
-[cite_start]Esto da mayor peso al historial reciente, creando una animación de barra ASCII fluida en la consola[cite: 293, 318].
-
-### 4. Clasificación Dinámica de Umbrales
-[cite_start]El sistema decodifica el nivel de amplitud en cuatro estados humanos comprensibles:
-* [cite_start]**Silencio ambiental:** `< 2,000` (El ruido de fondo normal de una habitación)[cite: 294, 320].
-* [cite_start]**Ruido / Voz:** `2,000 – 10,000` (Conversaciones a volumen normal)[cite: 294, 321].
-* [cite_start]**Voz Fuerte:** `10,000 – 25,000` (Aplausos, hablar cerca del micrófono)[cite: 294, 322].
-* [cite_start]**Saturación:** `> 25,000` (Gritos directos al sensor o golpes)[cite: 294, 323].
+Cuanto mayor sea el primer coeficiente (5), más peso tiene el historial — la respuesta es más lenta pero estable. Cuanto mayor sea el segundo (3), más reacciona al valor nuevo.
 
 ---
 
-## 💻 Telemetría y Monitor Serie
+## Hardware
 
-[cite_start]Para evaluar el sistema, abre el monitor serie de tu IDE configurado a **115200 baudios**. [cite_start]Observarás un dashboard que se actualiza a 10 Hz (cada 100 ms) detallando la amplitud actual, el pico histórico, la clasificación de ruido y una barra ASCII gráfica[cite: 315, 316, 324]:
+| Pin INMP441 | GPIO ESP32-C6 | Función I2S |
+|------------|--------------|------------|
+| VDD | 3.3V | Alimentación |
+| GND | GND | Tierra |
+| L/R | GND | Canal izquierdo |
+| SCK | GPIO 4 | Reloj de bits (BCLK) |
+| WS | GPIO 5 | Word Select (LRCK) |
+| SD | GPIO 3 | Datos seriales |
 
-```text
+> El pin L/R **debe** estar en GND. Si queda flotando, el canal de datos no está definido y los valores serán incorrectos o cero.
+
+---
+
+## Compilar y subir
+
+```powershell
+arduino-cli compile --fqbn esp32:esp32:esp32c6 03_firmware/esp32c6/pruebas/09_prueba_sonido_microfono
+arduino-cli upload -p COM3 --fqbn esp32:esp32:esp32c6 03_firmware/esp32c6/pruebas/09_prueba_sonido_microfono
+arduino-cli monitor -p COM3 -b esp32:esp32:esp32c6 -c baudrate=115200
+```
+
+---
+
+## Resultado en tiempo real
+
+El Monitor Serie muestra un dashboard que se actualiza 10 veces por segundo:
+
+```
 ========================================
   PRUEBA DE SONIDO — INMP441
 ========================================
   SCK=GPIO4  WS=GPIO5  SD=GPIO3
   L/R → GND
-========================================
-  Iniciando I2S...
-  Listo.
 
-  Guia de valores:
+  Guía de valores:
     Silencio      :     0 –  2000
     Ruido / voz   :  2000 – 10000
     Voz fuerte    : 10000 – 25000
@@ -74,10 +73,62 @@ Para evitar que el renderizado de la barra visual sea errático y difícil de le
    14300  | 14300 | voz fuerte   | |############################            |
    31000  | 31000 | MUY FUERTE!  | |#####################################!!!|
 ```
-🔧 Solución de Problemas (Troubleshooting):
 
--> ERROR al instalar driver I2S: Ocurre si hay un conflicto de pines en el microcontrolador. Verifica que ningún otro periférico esté usando los GPIOs 3, 4 o 5.  
+---
 
--> Valores estancados en 0 o 65535: El micrófono está energizado, pero la línea de datos (SD en el GPIO 3) está desconectada, o el pin L/R no está anclado a GND.  
+## Tabla de registro (llénala)
 
--> No se leyeron datos del micrófono: El I2S inició, pero el bus no está generando la interrupción del reloj. Revisa exhaustivamente los cables SCK (GPIO 4) y WS (GPIO 5).  
+| Condición | Amplitud observada | Ejemplo típico |
+|-----------|-------------------|----------------|
+| Silencio absoluto | ____________ | `200 – 800` |
+| Voz normal (30 cm) | ____________ | `3 000 – 8 000` |
+| Aplauso seco cerca | ____________ | `15 000 – 30 000` |
+
+> Tu umbral de "sonido fuerte" para el firmware debe estar entre voz normal y aplauso. Anota el valor que eliges: ______
+
+---
+
+## Diagnóstico
+
+| Lo que ves | Causa probable | Solución |
+|-----------|---------------|----------|
+| Valores siempre en cero | Pin L/R flotante o SD desconectado | Conecta L/R → GND; verifica GPIO 3 |
+| Valores siempre al máximo | Cortocircuito en SD o interferencia | Aleja el micrófono de la fuente de 5V |
+| Ruido constante sin sonido | Interferencia electromagnética | Aleja el cable SD de los cables de alimentación |
+| `ERROR al instalar driver I2S` | Conflicto de pines | Verifica que ningún otro periférico usa GPIO 3, 4 o 5 |
+
+---
+
+## Mini-reto
+
+El coeficiente de suavizado controla qué tan rápido reacciona la barra. Busca esta línea en el sketch:
+
+```cpp
+suavizado = (suavizado * 5 + amp * 3) / 8;
+```
+
+Experimenta con estas variaciones y observa la barra:
+
+| Variante | Código | Comportamiento esperado |
+|----------|--------|------------------------|
+| Muy reactivo | `(suavizado * 2 + amp * 6) / 8` | Salta rápido, difícil de leer |
+| Muy suave | `(suavizado * 7 + amp * 1) / 8` | Lento, casi no reacciona |
+| Equilibrado (original) | `(suavizado * 5 + amp * 3) / 8` | Respuesta natural |
+
+¿Cuál variante sería más útil para un **detector de aplausos** (necesita reaccionar rápido) versus un **indicador de ruido ambiental** (necesita ser estable)?
+
+---
+
+## Retos disponibles
+
+Con los umbrales que registraste, puedes ir a:
+
+- **[Reto 4 — Contador de aplausos](../retos/reto-4-aplausos/)** ⭐⭐⭐ Difícil
+  Crea un Modo 5 en Mochi que cuente aplausos usando exactamente los valores que mediste. Cada aplauso sube el contador en pantalla.
+
+- **[Reto 7 — Espejo emocional](../retos/reto-7-espejo-emocional/)** ⭐⭐ Medio
+  Haz que los ojos de Mochi cambien en tiempo real según el nivel de ruido ambiental. Silencio = dormido, voz = feliz, grito = sorprendido.
+
+---
+
+**Siguiente prueba →** [10_transcripcion/](../10_transcripcion/)

@@ -2,7 +2,9 @@
 
 > **Prerrequisito:** [mochi_unified_5/](../mochi_unified_5/) — haber leído las funciones del robot.
 
-Esta carpeta contiene los retos de personalización del taller. Cada uno tiene su propio directorio con instrucciones y, donde corresponde, código listo para modificar.
+Esta carpeta contiene los retos de personalización del taller. No son ejercicios con respuesta única — son puntos de partida abiertos. Cada uno pide que entiendas una parte del sistema y la modifiques a tu criterio.
+
+Los retos **5 y 6 son Easter Eggs** listos para jugar. Los demás requieren modificar el firmware.
 
 ---
 
@@ -35,17 +37,18 @@ retos/
 
 ## Índice de retos
 
-| # | Reto | Nivel | Tipo de cambio |
+| # | Reto | Nivel | Qué aprenderás |
 |---|------|-------|---------------|
-| 5 | [Chrome Dino](#reto-5--chrome-dino-en-oled-) | Easter Egg | Modificar constantes de física en `t-rex-duino.h` |
-| 6 | [Flappy Bird](#reto-6--flappy-bird-en-oled-) | Easter Egg | Modificar constantes de física en `flappyBird.ino` |
-| 1 | [Nueva melodía](reto-1-melodia/) | Fácil | Modificar array de notas en `tetrisTheme()` |
-| 2 | [Nuevo mood: guiño](reto-2-mood-wink/) | Medio | Agregar constante + máscara de párpado + tamaño |
-| 3 | [GIF personalizado](reto-3-gif-propio/) | Medio | Convertir GIF y subirlo a LittleFS |
-| 4 | [Contador de aplausos](reto-4-aplausos/) | Difícil | Agregar Modo 5 con detección de audio |
-| 7 | [Espejo emocional](reto-7-espejo-emocional/) | Medio | Cambiar moods según amplitud del micrófono |
-| 11 | [Alarma para el reloj](reto-8-alarma-reloj/) | Medio | Disparar sonido y mensaje en una hora fija |
-| 16 | [Pantalla de inicio animada](reto-9-bienvenida/) | Fácil | Mostrar una secuencia visual al arrancar |
+| 5 | [Chrome Dino](#reto-5--chrome-dino-en-oled-) | Easter Egg | Constantes de física y game loop en OLED |
+| 6 | [Flappy Bird](#reto-6--flappy-bird-en-oled-) | Easter Egg | Variables de gravedad, velocidad y gap |
+| 1 | [Nueva melodía](reto-1-melodia/) | ⭐ Fácil | Arrays, frecuencias Hz, duración de notas |
+| 9 | [Pantalla de inicio animada](reto-9-bienvenida/) | ⭐ Fácil | `setup()`, funciones de dibujo, `delay()` no bloqueante |
+| 2 | [Nuevo mood: guiño](reto-2-mood-wink/) | ⭐⭐ Medio | Constantes, máscara de párpado, `switch/case` |
+| 3 | [GIF personalizado](reto-3-gif-propio/) | ⭐⭐ Medio | LittleFS, conversión de formato, filesystem flash |
+| 7 | [Espejo emocional](reto-7-espejo-emocional/) | ⭐⭐ Medio | Umbrales de audio, máquina de estados, transiciones |
+| 8 | [Alarma para el reloj](reto-8-alarma-reloj/) | ⭐⭐ Medio | NTP, comparación de tiempo, flags de estado |
+| 10 | [Tu propia API](reto-10-nueva-api/) | ⭐⭐ Medio | HTTP GET, JSON parsing, documentación de APIs |
+| 4 | [Contador de aplausos](reto-4-aplausos/) | ⭐⭐⭐ Difícil | Detección de picos, debounce de audio, nuevo modo |
 
 ---
 
@@ -177,6 +180,23 @@ arduino-cli monitor -p COM3 -b esp32:esp32:esp32c6 -c baudrate=115200
 **Fase 2 — Integrar como Modo 5:** cuando la detección funcione, el README te guía con los 3 cambios exactos en `mochi_unified_5.ino`.
 
 Guía completa → [reto-4-aplausos/README.md](reto-4-aplausos/README.md)
+
+---
+
+## Reto 10 — Tu propia API ⭐⭐ Medio
+
+**Objetivo:** Conecta Mochi a cualquier API REST pública y muestra sus datos en la OLED.
+
+**Qué necesitas:** WiFi funcionando (Prueba 07) y, opcionalmente, haber completado la Prueba 08 — Clima (que ya hace exactamente este patrón).
+
+**El patrón que aprenderás:**
+```
+ESP32 → HTTP GET → API externa → JSON → parsear → mostrar en OLED
+```
+
+Algunas APIs gratuitas sin registro: Advice Slip (consejos), Open-Meteo (clima sin clave), Frankfurter (divisas), Bored API (actividades).
+
+Guía completa → [reto-10-nueva-api/README.md](reto-10-nueva-api/README.md)
 
 ---
 

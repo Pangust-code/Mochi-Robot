@@ -177,3 +177,29 @@ MODELO = "base"   # tiny | base | small | medium | large
 | `no hay memoria` | Buffer muy grande | Reduce `RECORD_SECS` a 2 |
 | Grabación en blanco | Micrófono mal conectado | Corre `prueba_sonido_microfono` primero |
 | `Error al parsear JSON` | El servidor no devolvió JSON válido | Verifica la respuesta del servidor en el monitor serial |
+
+---
+
+## ¿Qué aprendiste?
+
+Esta prueba conecta varias tecnologías en cadena:
+
+```
+Micrófono I2S → buffer PCM → formato WAV → HTTP POST → Whisper (IA) → JSON → texto
+```
+
+Cada paso transforma los datos:
+- **I2S → PCM**: el ESP32-C3 convierte señal eléctrica en números de 32 bits
+- **PCM → WAV**: se agrega un encabezado estándar de 44 bytes para que el servidor entienda el formato
+- **HTTP POST**: el audio viaja por WiFi como un archivo adjunto (`multipart/form-data`)
+- **Whisper → JSON**: la IA devuelve texto estructurado que el ESP32 parsea con `ArduinoJson`
+
+Si llegaste hasta aquí y escuchaste tu propia voz transcrita, ya estás usando un pipeline de procesamiento de señal + red + inteligencia artificial en un microcontrolador.
+
+---
+
+## Reto propuesto
+
+¿Y si en vez de solo mostrar la transcripción en el Monitor Serie, Mochi reaccionara con una emoción diferente según lo que escucha?
+
+Ese es exactamente el siguiente paso. Ver → [Reto 10 — Tu propia API](../retos/reto-10-nueva-api/)
