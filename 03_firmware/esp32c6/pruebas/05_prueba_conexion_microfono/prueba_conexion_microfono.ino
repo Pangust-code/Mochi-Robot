@@ -11,7 +11,7 @@
   3. Con un cable dupont suelto, toca momentáneamente cada GPIO a GND:
        GPIO 3 → SD   (línea de datos)
        GPIO 4 → SCK  (reloj de bits)
-       GPIO 5 → WS   (selección de canal)
+       GPIO 1 → WS   (selección de canal)
   4. Cada pin debe cambiar de HIGH a LOW al tocarlo con GND
   5. Si un pin NO cambia, ese cable o conexión tiene un problema
 
