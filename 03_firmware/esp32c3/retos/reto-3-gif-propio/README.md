@@ -1,82 +1,107 @@
-# Reto 3 — Animación GIF propia ⭐ / ⭐⭐
+# Reto 3 — Tu GIF en Mochi ⭐ Fácil
 
-Agrega una animación GIF personalizada al Modo 1 del robot.
+Personaliza el Modo 1 de Mochi con una animación que elijas tú de internet.
 
-## Nivel
-
-- Fácil si usas un GIF existente de `recursos/gifs/`
-- Medio si creas el GIF desde cero
+Al terminar, tu robot va a tener una animación que ningún otro robot del taller va a tener.
 
 ---
 
-## Paso 1 — Conseguir o crear un GIF
+## El reto
 
-### Opción A — Usar uno de los GIFs del repositorio
-Hay 99 GIFs en `recursos/gifs/`. Elige el que más te guste.
+Busca en internet el GIF que más te represente, que más te haga reír, o que simplemente quieras ver en la pantalla de 128×64 píxeles de tu robot. Conviértelo y súbelo.
 
-### Opción B — Crear tu propio GIF
-Herramientas recomendadas:
-- **Piskel** (web, gratuito): [piskelapp.com](https://www.piskelapp.com)
-- **Aseprite** (de pago, muy completo)
-- **GIMP** (gratuito, más complejo)
+Sitios donde buscar:
+- [giphy.com](https://giphy.com)
+- [tenor.com](https://tenor.com)
+- Cualquier GIF que hayas guardado en tu celular o computadora
 
-**Requisitos del GIF:**
-- Tamaño: **128 × 64 píxeles** (exacto)
-- Colores: **blanco y negro** (escala de grises si no puedes hacer 1-bit)
-- Frames: entre 4 y 30 (más frames = más espacio en la flash)
+> **Restricción de tamaño:** GIFs de hasta ~30 frames funcionan bien. Uno muy largo puede no caber en la flash. Si dudas, elige algo corto y con movimiento simple.
 
 ---
 
-## Paso 2 — Convertir el GIF a formato `.bin`
+## Cómo funciona la conversión
 
-El ESP32 no puede leer GIFs directamente. Necesitas convertirlo al formato binario que usa Mochi.
-
-Usa la herramienta incluida en el repositorio:
+La pantalla OLED de Mochi solo muestra blanco y negro — no colores, no grises. El proceso de conversión hace esto automáticamente:
 
 ```
-herramientas/convertidor_gifs/gif.exe
-```
-
-**Windows:**
-```powershell
-# Arrastra el GIF encima de gif.exe
-# O desde la terminal:
-.\herramientas\convertidor_gifs\gif.exe mi-animacion.gif
-```
-
-El resultado es un archivo `mi-animacion.bin` en el mismo directorio.
-
----
-
-## Paso 3 — Copiar el `.bin` a la carpeta `data/`
-
-```powershell
-copy mi-animacion.bin 03_firmware/esp32c3/software/data/
+GIF de internet (color, cualquier tamaño)
+        │
+        ▼  gif.exe
+carpeta/ frame_000.bin, frame_001.bin ...   ← un archivo por frame, blanco y negro
+        │
+        ▼  frame_to_bin_converter.exe
+mi-animacion.bin                            ← un solo archivo listo para el ESP32
+        │
+        ▼  copiar a data/ + subir LittleFS
+Modo 1 de Mochi
 ```
 
 ---
 
-## Paso 4 — Subir el filesystem al ESP32
+## Paso 1 — Descarga el GIF
 
-Repite el proceso de subida de LittleFS (Sección 2, Paso 6) para que el ESP32 encuentre el nuevo archivo.
-
-Con el plugin Arduino IDE:
-1. Abre el sketch `software.ino`
-2. Ve a **Herramientas → ESP32 LittleFS Data Upload**
+Descarga el GIF a tu computadora. Anota en qué carpeta quedó.
 
 ---
 
-## Paso 5 — Verificar
+## Paso 2 — Extraer los frames con `gif.exe`
 
-Entra al **Modo 1** (avanza con hold hasta GIFs) y espera la rotación. Tu animación debe aparecer entre los demás GIFs.
+1. Abre la carpeta `herramientas/convertidor_gifs/` del repositorio
+2. Arrastra tu archivo `.gif` encima de **`gif.exe`**
+3. Se crea una subcarpeta con el nombre del GIF conteniendo los frames:
+   ```
+   herramientas/convertidor_gifs/mi-animacion/
+       frame_000.bin
+       frame_001.bin
+       ...
+   ```
 
-Si no aparece:
-- Verifica que el `.bin` está en `03_firmware/esp32c3/software/data/`
-- Verifica que subiste el filesystem DESPUÉS de copiar el archivo
-- En el monitor serial verás `LittleFS OK — XX/128 KB` — si el número aumentó, el archivo está ahí
+Cada frame es exactamente **1024 bytes** (128×64 px, 1 bit por píxel). Si el GIF tenía colores, ya quedaron convertidos a blanco y negro.
 
 ---
 
-## Resultado esperado
+## Paso 3 — Crear el `.bin` final con `frame_to_bin_converter.exe`
 
-Tu animación personalizada se reproduce en el Modo 1 en rotación con las demás.
+1. Ejecuta **`frame_to_bin_converter.exe`** (en la misma carpeta `herramientas/convertidor_gifs/`)
+2. Selecciona la carpeta de frames que se creó en el paso anterior
+3. El programa genera `mi-animacion.bin` — este es el archivo que necesitas
+
+---
+
+## Paso 4 — Copiar el `.bin` a la carpeta `data/`
+
+Usando el Explorador de archivos de Windows, copia `mi-animacion.bin` a:
+
+```
+03_firmware/esp32c3/software/data/
+```
+
+---
+
+## Paso 5 — Subir el filesystem al ESP32
+
+1. Abre el sketch `software.ino` en Arduino IDE
+2. Verifica que el board y el puerto estén configurados en **Tools**
+3. Ve a **Sketch → Upload LittleFS to ESP32**
+
+Espera a que termine — verás `Done uploading` en la consola.
+
+---
+
+## Paso 6 — Ver el resultado
+
+Entra al **Modo 1** de Mochi (avanza con hold hasta el modo GIFs). Tu animación aparece en rotación junto con las demás.
+
+**Si no aparece:**
+
+| Síntoma | Causa | Solución |
+|---------|-------|---------|
+| No aparece en el Modo 1 | El `.bin` no está en `data/` | Verifica que el archivo quedó en `03_firmware/esp32c3/software/data/` |
+| No aparece aunque el archivo esté | Subiste el filesystem antes de copiar el `.bin` | Copia el archivo y vuelve a subir LittleFS |
+| Imagen con ruido o estática | El GIF tenía muchos colores similares al gris medio | Elige otro con mayor contraste o fondo negro |
+| Error al subir LittleFS | `data/` está demasiado llena | Borra algún `.bin` que no uses de la carpeta |
+
+---
+
+**← Anterior:** [Reto 2 — Nuevo mood: guiño](../reto-2-mood-wink/)
+**Siguiente →** [Reto 4 — Contador de aplausos](../reto-4-aplausos/)
