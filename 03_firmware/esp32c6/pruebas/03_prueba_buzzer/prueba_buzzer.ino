@@ -44,7 +44,8 @@
 Adafruit_SH1106G display(128, 64, &Wire, -1);
 
 // ── Notas musicales (mismas que el firmware) ──────────────────────────────
-const int A4=440, B4=494, C5=523, D5=587, E5=659, F5=698, G5=784, A5=880;
+// A4/A5 son macros de pines analógicos en Arduino; se usa prefijo NOTE_ para evitar conflicto
+const int NOTE_A4=440, NOTE_B4=494, NOTE_C5=523, NOTE_D5=587, NOTE_E5=659, NOTE_F5=698, NOTE_G5=784, NOTE_A5=880;
 
 // ── Estado del OLED ───────────────────────────────────────────────────────
 String lineaTitulo  = "";
@@ -109,12 +110,12 @@ void tonoPomodoro() {
 
 void tetrisTheme() {
   int mel[] = {
-    E5,250, B4,125, C5,125, D5,250, C5,125, B4,125,
-    A4,250, A4,125, C5,125, E5,250, D5,125, C5,125,
-    B4,375, C5,125, D5,250, E5,250, C5,250, A4,250, A4,250, 0,250,
-    D5,375, F5,125, A5,250, G5,125, F5,125,
-    E5,375, C5,125, E5,250, D5,125, C5,125,
-    B4,250, B4,125, C5,125, D5,250, E5,250, C5,250, A4,250, A4,250, 0,250
+    NOTE_E5,250, NOTE_B4,125, NOTE_C5,125, NOTE_D5,250, NOTE_C5,125, NOTE_B4,125,
+    NOTE_A4,250, NOTE_A4,125, NOTE_C5,125, NOTE_E5,250, NOTE_D5,125, NOTE_C5,125,
+    NOTE_B4,375, NOTE_C5,125, NOTE_D5,250, NOTE_E5,250, NOTE_C5,250, NOTE_A4,250, NOTE_A4,250, 0,250,
+    NOTE_D5,375, NOTE_F5,125, NOTE_A5,250, NOTE_G5,125, NOTE_F5,125,
+    NOTE_E5,375, NOTE_C5,125, NOTE_E5,250, NOTE_D5,125, NOTE_C5,125,
+    NOTE_B4,250, NOTE_B4,125, NOTE_C5,125, NOTE_D5,250, NOTE_E5,250, NOTE_C5,250, NOTE_A4,250, NOTE_A4,250, 0,250
   };
   int n = sizeof(mel) / sizeof(mel[0]) / 2;
   float spd = 0.9f;
